@@ -5,3 +5,9 @@ dist/
 .DS_Store
 .env
 .env.local
+test-results/
+playwright-report/
+release/
+*.exe
+*.dmg
+*.AppImage

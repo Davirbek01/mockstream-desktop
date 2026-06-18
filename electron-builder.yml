@@ -1,0 +1,12 @@
+appId: app.mockstream.desktop
+productName: Mock Stream
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+win:
+  target: nsis
+mac:
+  target: dmg
+  category: public.app-category.education
