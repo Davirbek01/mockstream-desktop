@@ -1,13 +1,15 @@
 {
   "name": "mockstream-desktop",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Electron desktop client for the Mock Stream exam platform (Windows + macOS).",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "test": "vitest run",
+    "pretest:e2e": "electron-vite build",
     "test:e2e": "playwright test",
     "pack": "electron-vite build && electron-builder --dir"
   },
