@@ -3,6 +3,8 @@ import { join } from 'node:path'
 import { resolveRunnerTarget } from './runner-target'
 import { loadRunnerConfig } from './config'
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1280,
@@ -21,6 +23,11 @@ function createWindow(): BrowserWindow {
   })
 
   if (target.type === 'remote') {
+    win.webContents.once('did-fail-load', (_e, _code, _desc, _url, isMainFrame) => {
+      if (isMainFrame) {
+        win.loadFile(loadRunnerConfig().localFallback)
+      }
+    })
     win.loadURL(target.target)
   } else {
     win.loadFile(target.target)
@@ -30,6 +37,27 @@ function createWindow(): BrowserWindow {
 
 ipcMain.handle('app:version', () => app.getVersion())
 
-app.whenReady().then(() => {
-  createWindow()
-})
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
+
+  app.whenReady().then(() => {
+    mainWindow = createWindow()
+  })
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow()
+  })
+}
