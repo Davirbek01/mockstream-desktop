@@ -1,5 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, net } from 'electron'
 import { join } from 'node:path'
+import { resolveRunnerTarget } from './runner-target'
+import { loadRunnerConfig } from './config'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -12,7 +14,17 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false
     }
   })
-  win.loadFile(join(__dirname, '../renderer/fallback.html'))
+
+  const target = resolveRunnerTarget({
+    online: net.isOnline(),
+    config: loadRunnerConfig()
+  })
+
+  if (target.type === 'remote') {
+    win.loadURL(target.target)
+  } else {
+    win.loadFile(target.target)
+  }
   return win
 }
 
