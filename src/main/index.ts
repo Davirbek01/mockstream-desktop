@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net } from 'electron'
+import { app, BrowserWindow, ipcMain, net, session } from 'electron'
 import { join, resolve as resolvePath } from 'node:path'
 import { resolveRunnerTarget } from './runner-target'
 import { loadRunnerConfig } from './config'
@@ -132,6 +132,11 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(async () => {
+    // Grant the microphone to the bundled runner so the Speaking exam can record
+    // (Electron denies media by default). The runner is our own bundled origin.
+    session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
+      cb(permission === 'media' || permission === 'audioCapture')
+    })
     mainWindow = await createWindow()
     // Cold start via the link on Windows: the URL is in this instance's argv.
     handleDeepLink(deepLinkArg(process.argv))
