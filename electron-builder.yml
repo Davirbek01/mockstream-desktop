@@ -22,6 +22,13 @@ extraResources:
       - '**/*'
 win:
   target: nsis
+  # CODE SIGNING (ready, needs your certificate — see SIGNING.md):
+  # electron-builder auto-signs the .exe + installer when these env vars are set
+  # before `npm run dist`:
+  #   set CSC_LINK=C:\path\to\your-cert.pfx
+  #   set CSC_KEY_PASSWORD=<pfx password>
+  # With a real OV/EV cert from a CA, this removes the SmartScreen "unknown
+  # publisher" warning. Without a cert, the build is unsigned (current state).
 mac:
   target: dmg
   category: public.app-category.education
