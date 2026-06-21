@@ -3,6 +3,14 @@ productName: Mock Stream
 directories:
   output: dist
   buildResources: build
+# Register the mockstream:// custom protocol so the installed app handles the
+# Telegram bridge deep-link return (the same scheme the mobile app uses, which
+# tg-login.html already allow-lists). On Windows this writes the URL-scheme
+# registry keys at install time; on macOS it adds the CFBundleURLTypes entry.
+protocols:
+  - name: Mock Stream Protocol
+    schemes:
+      - mockstream
 files:
   - out/**/*
 # Bundle the runner's static SPA build (mockstream-runner/dist) into the
