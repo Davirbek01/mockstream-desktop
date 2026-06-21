@@ -18,4 +18,37 @@ describe('resolveRunnerTarget', () => {
     expect(resolveRunnerTarget({ online: true, config: { ...config, remoteUrl: '' } }))
       .toEqual({ type: 'local', target: '/abs/fallback.html' })
   })
+
+  it('explicit env remote override wins even when packaged with a bundled dir', () => {
+    expect(
+      resolveRunnerTarget({
+        online: true,
+        config: { ...config, explicitRemote: true, packaged: true, bundledDir: '/res/runner' }
+      })
+    ).toEqual({ type: 'remote', target: 'https://exam.example/runner' })
+  })
+
+  it('serves the bundled runner dir when packaged and no env override', () => {
+    expect(
+      resolveRunnerTarget({
+        online: true,
+        config: { ...config, packaged: true, bundledDir: '/res/runner' }
+      })
+    ).toEqual({ type: 'bundled', target: '/res/runner' })
+  })
+
+  it('serves the bundled runner even when offline (data layer handles network)', () => {
+    expect(
+      resolveRunnerTarget({
+        online: false,
+        config: { ...config, packaged: true, bundledDir: '/res/runner' }
+      })
+    ).toEqual({ type: 'bundled', target: '/res/runner' })
+  })
+
+  it('packaged without a bundled dir falls back to legacy behaviour', () => {
+    expect(
+      resolveRunnerTarget({ online: false, config: { ...config, packaged: true } })
+    ).toEqual({ type: 'local', target: '/abs/fallback.html' })
+  })
 })

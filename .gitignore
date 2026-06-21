@@ -11,3 +11,7 @@ release/
 *.exe
 *.dmg
 *.AppImage
+# Local verification/screenshot helpers (not part of the app)
+*.png
+capture-desktop.cjs
+verify-packaged.cjs
