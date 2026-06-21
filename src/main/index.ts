@@ -18,6 +18,18 @@ async function createWindow(): Promise<BrowserWindow> {
     }
   })
 
+  // Fill the screen on launch (still resizable). F11 toggles true fullscreen;
+  // Esc exits fullscreen.
+  win.maximize()
+  win.webContents.on('before-input-event', (_e, input) => {
+    if (input.type !== 'keyDown') return
+    if (input.key === 'F11') {
+      win.setFullScreen(!win.isFullScreen())
+    } else if (input.key === 'Escape' && win.isFullScreen()) {
+      win.setFullScreen(false)
+    }
+  })
+
   const config = loadRunnerConfig({
     packaged: app.isPackaged,
     resourcesPath: process.resourcesPath
