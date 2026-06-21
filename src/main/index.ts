@@ -4,6 +4,7 @@ import { resolveRunnerTarget } from './runner-target'
 import { loadRunnerConfig } from './config'
 import { startRunnerServer } from './runner-server'
 import { extractTgAuthPayload, deepLinkArg } from './deeplink'
+import { attachLockdown } from './lockdown'
 
 const PROTOCOL = 'mockstream'
 
@@ -36,6 +37,15 @@ async function createWindow(): Promise<BrowserWindow> {
       win.setFullScreen(false)
     }
   })
+
+  // No application menu — also strips the default reload/devtools accelerators.
+  win.setMenu(null)
+
+  // Secure exam lockdown: kiosk fullscreen + focus-loss flag + escape-route
+  // blocking, engaged only while a real exam route is active (detect-and-flag).
+  const lockdown = attachLockdown(win, ipcMain)
+  win.webContents.on('did-navigate', (_e, url) => lockdown.handleNavigation(url))
+  win.webContents.on('did-navigate-in-page', (_e, url) => lockdown.handleNavigation(url))
 
   const config = loadRunnerConfig({
     packaged: app.isPackaged,

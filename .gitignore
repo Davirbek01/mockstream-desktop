@@ -15,3 +15,4 @@ release/
 *.png
 capture-desktop.cjs
 verify-packaged.cjs
+capture-lockdown.cjs
