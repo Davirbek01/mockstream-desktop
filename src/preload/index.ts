@@ -18,6 +18,14 @@ contextBridge.exposeInMainWorld('desktop', {
   appVersion: () => ipcRenderer.invoke('app:version'),
   platform: process.platform,
 
+  // --- Native OS notifications -------------------------------------------
+  /** Fire a native desktop notification. The main process shows an Electron
+   *  Notification; clicking it focuses the window and (if `route` is given)
+   *  navigates the runner to that path. Fire-and-forget. */
+  notify(n: { title: string; body: string; route?: string }) {
+    ipcRenderer.send('notify:show', n)
+  },
+
   // --- Secure exam lockdown bridge ---------------------------------------
   /** True while an exam route is active (kiosk + escape-block engaged). Reads
    *  the locally-mirrored value updated by the `lockdown:state` event. */

@@ -5,14 +5,34 @@ import { loadRunnerConfig } from './config'
 import { startRunnerServer } from './runner-server'
 import { extractTgAuthPayload, deepLinkArg } from './deeplink'
 import { attachLockdown } from './lockdown'
+import { attachNotifications, type NotificationsController } from './notifications'
 
 const PROTOCOL = 'mockstream'
+const APP_ID = 'app.mockstream.desktop'
 
 let mainWindow: BrowserWindow | null = null
 // The base URL the window is currently serving (local runner server or remote/
 // env URL). Remembered so a Telegram deep link can re-navigate the SAME runner
 // with the #tgAuthResult payload appended, triggering its mount-time completion.
 let currentRunnerBaseUrl: string | null = null
+let notifications: NotificationsController | null = null
+
+/** Build the URL to navigate the current runner to a route path (e.g.
+ *  `/reading/123`). The runner uses BrowserRouter, so routes are real paths off
+ *  the base URL's origin. Returns null when there's no served base URL (offline
+ *  fallback file://) or the route is empty. */
+function runnerRouteUrl(route: string | undefined): string | null {
+  if (!route || !currentRunnerBaseUrl) return null
+  try {
+    const u = new URL(currentRunnerBaseUrl)
+    u.hash = ''
+    u.search = ''
+    u.pathname = route.startsWith('/') ? route : `/${route}`
+    return u.toString()
+  } catch {
+    return null
+  }
+}
 
 async function createWindow(): Promise<BrowserWindow> {
   const win = new BrowserWindow({
@@ -46,6 +66,23 @@ async function createWindow(): Promise<BrowserWindow> {
   const lockdown = attachLockdown(win, ipcMain)
   win.webContents.on('did-navigate', (_e, url) => lockdown.handleNavigation(url))
   win.webContents.on('did-navigate-in-page', (_e, url) => lockdown.handleNavigation(url))
+
+  // Native notifications: new-published-mock toasts (renderer-driven) + a gentle
+  // practice reminder. Reuses the lockdown controller's exam-active state to
+  // suppress reminders during a test. Clicking a notification focuses the window
+  // and (for a new-mock toast) navigates the runner to the mock's route.
+  notifications?.dispose()
+  notifications = attachNotifications(win, ipcMain, {
+    isExamActive: () => lockdown.active,
+    onActivate: (route) => {
+      if (win.isDestroyed()) return
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+      const url = runnerRouteUrl(route)
+      if (url) void win.loadURL(url)
+    },
+  })
 
   const config = loadRunnerConfig({
     packaged: app.isPackaged,
@@ -142,6 +179,10 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(async () => {
+    // Windows shows the AppUserModelId's app name/icon on notification toasts;
+    // it must match electron-builder's appId so installed builds resolve the
+    // Start-menu shortcut (and thus the app name/icon) for the toast.
+    app.setAppUserModelId(APP_ID)
     // Grant the microphone to the bundled runner so the Speaking exam can record
     // (Electron denies media by default). The runner is our own bundled origin.
     session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
