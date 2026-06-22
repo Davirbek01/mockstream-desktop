@@ -8,9 +8,11 @@ reinstalls after each change.
 - The packaged app reads an update **feed** from a public GCS bucket:
   `https://storage.googleapis.com/mockstream-desktop-releases`
   (configured as the `publish` block in `electron-builder.yml`).
-- On launch (and every 6 hours) it checks `latest.yml` there. If a newer
-  version exists, it downloads the installer in the background and **installs it
-  the next time the app is closed** — so it never interrupts an exam.
+- It checks `latest.yml` there **on launch, every 6 hours, and whenever you click
+  back into the app window** (focus, throttled to once a minute). If a newer
+  version exists, it downloads the installer in the background and shows an
+  in-app **"Update ready — Restart to update / Later"** banner; "Later" still
+  installs it the next time the app is closed — so it never interrupts an exam.
 - Update verification uses the sha512 in `latest.yml`, so this works while the
   app is still **unsigned**. (A code-signing cert later only removes the
   Windows SmartScreen prompt — it isn't required for updating.)

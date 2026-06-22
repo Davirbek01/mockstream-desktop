@@ -80,4 +80,16 @@ export function attachAutoUpdater(
   // Check shortly after launch, then on a 6-hour cadence.
   check()
   setInterval(check, SIX_HOURS)
+
+  // Also re-check whenever the user returns focus to the app (throttled to once
+  // a minute), so a freshly published update is noticed promptly — no relaunch
+  // or waiting for the 6h timer. This is what surfaces the "Restart to update"
+  // banner shortly after you click back into the window.
+  let lastFocusCheck = 0
+  app.on('browser-window-focus', () => {
+    const now = Date.now()
+    if (now - lastFocusCheck < 60_000) return
+    lastFocusCheck = now
+    check()
+  })
 }
