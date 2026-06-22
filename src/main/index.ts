@@ -6,6 +6,7 @@ import { startRunnerServer } from './runner-server'
 import { extractTgAuthPayload, deepLinkArg } from './deeplink'
 import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
+import { attachAutoUpdater } from './updater'
 
 const PROTOCOL = 'mockstream'
 const APP_ID = 'app.mockstream.desktop'
@@ -191,6 +192,8 @@ if (!gotTheLock) {
     mainWindow = await createWindow()
     // Cold start via the link on Windows: the URL is in this instance's argv.
     handleDeepLink(deepLinkArg(process.argv))
+    // Background auto-update (packaged Windows only; installs on next quit).
+    attachAutoUpdater(() => mainWindow)
   })
 
   app.on('window-all-closed', () => {

@@ -14,7 +14,9 @@
     "prepack": "npm --prefix ../mockstream-runner run build",
     "pack": "electron-vite build && electron-builder --dir",
     "predist": "npm --prefix ../mockstream-runner run build",
-    "dist": "electron-vite build && electron-builder"
+    "dist": "electron-vite build && electron-builder",
+    "release": "npm run dist && node scripts/upload-release.mjs",
+    "publish:feed": "node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",
@@ -29,5 +31,8 @@
     "typescript": "^6.0.3",
     "vite": "^7.3.5",
     "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

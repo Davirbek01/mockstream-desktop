@@ -3,6 +3,13 @@ productName: Mock Stream
 directories:
   output: dist
   buildResources: build
+# Auto-update feed (electron-updater). The packaged app reads latest.yml + the
+# installer from this public GCS bucket; `npm run release` builds and uploads
+# them (see AUTOUPDATE.md). A space-free artifact name keeps the download URL clean.
+artifactName: MockStream-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/mockstream-desktop-releases
 # Register the mockstream:// custom protocol so the installed app handles the
 # Telegram bridge deep-link return (the same scheme the mobile app uses, which
 # tg-login.html already allow-lists). On Windows this writes the URL-scheme

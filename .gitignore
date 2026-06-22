@@ -16,3 +16,8 @@ release/
 capture-desktop.cjs
 verify-packaged.cjs
 capture-lockdown.cjs
+
+# local screenshot/capture dev helpers
+capture-*.cjs
+grab-*.cjs
+*.png
