@@ -17,6 +17,9 @@ let mainWindow: BrowserWindow | null = null
 // with the #tgAuthResult payload appended, triggering its mount-time completion.
 let currentRunnerBaseUrl: string | null = null
 let notifications: NotificationsController | null = null
+// The active lockdown controller, hoisted so the auto-updater can ask whether an
+// exam is in progress before applying a "Restart to update" request.
+let lockdownController: ReturnType<typeof attachLockdown> | null = null
 
 /** Build the URL to navigate the current runner to a route path (e.g.
  *  `/reading/123`). The runner uses BrowserRouter, so routes are real paths off
@@ -65,6 +68,7 @@ async function createWindow(): Promise<BrowserWindow> {
   // Secure exam lockdown: kiosk fullscreen + focus-loss flag + escape-route
   // blocking, engaged only while a real exam route is active (detect-and-flag).
   const lockdown = attachLockdown(win, ipcMain)
+  lockdownController = lockdown
   win.webContents.on('did-navigate', (_e, url) => lockdown.handleNavigation(url))
   win.webContents.on('did-navigate-in-page', (_e, url) => lockdown.handleNavigation(url))
 
@@ -192,8 +196,9 @@ if (!gotTheLock) {
     mainWindow = await createWindow()
     // Cold start via the link on Windows: the URL is in this instance's argv.
     handleDeepLink(deepLinkArg(process.argv))
-    // Background auto-update (packaged Windows only; installs on next quit).
-    attachAutoUpdater(() => mainWindow)
+    // Background auto-update (packaged Windows only; installs on next quit, or
+    // immediately when the user clicks "Restart to update" outside an exam).
+    attachAutoUpdater(() => mainWindow, () => !!lockdownController?.active)
   })
 
   app.on('window-all-closed', () => {

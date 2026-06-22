@@ -17,17 +17,36 @@
 //     works while the app is still unsigned (a CA cert later just removes the
 //     SmartScreen prompt — it isn't required for the update mechanism).
 // ============================================================================
-import { app, Notification, type BrowserWindow } from 'electron'
+import { app, ipcMain, Notification, type BrowserWindow } from 'electron'
 import electronUpdater from 'electron-updater'
 
 const { autoUpdater } = electronUpdater
 
 const SIX_HOURS = 6 * 60 * 60 * 1000
 
-/** Wire background update checks. `getWindow` yields the current main window (or
- *  null) so we can ping the renderer when an update is ready. */
-export function attachAutoUpdater(getWindow: () => BrowserWindow | null): void {
-  // Dev / unpacked has no update metadata — skip entirely.
+/** Wire background update checks.
+ *  @param getWindow    yields the current main window (or null) so we can ping
+ *                      the renderer when an update is ready.
+ *  @param isExamActive guard so a "Restart to update" request is ignored while
+ *                      a student is mid-exam (it still applies on the next quit
+ *                      via autoInstallOnAppQuit). */
+export function attachAutoUpdater(
+  getWindow: () => BrowserWindow | null,
+  isExamActive: () => boolean = () => false,
+): void {
+  // The renderer's "Restart to update" button asks main to apply the update now
+  // — but never mid-exam. Registered even in dev so the IPC channel exists; it
+  // only acts once an update has actually been downloaded.
+  ipcMain.on('update:restart', () => {
+    if (isExamActive()) return // never interrupt an exam; applies on next quit
+    try {
+      autoUpdater.quitAndInstall()
+    } catch (err) {
+      console.warn('[updater] quitAndInstall failed:', (err as Error)?.message ?? err)
+    }
+  })
+
+  // Dev / unpacked has no update metadata — skip the background checks.
   if (!app.isPackaged) return
 
   autoUpdater.autoDownload = true

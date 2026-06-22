@@ -54,4 +54,19 @@ contextBridge.exposeInMainWorld('desktop', {
     ipcRenderer.on('lockdown:focus-loss', handler)
     return () => ipcRenderer.removeListener('lockdown:focus-loss', handler)
   },
+
+  // --- Auto-update bridge ------------------------------------------------
+  /** Subscribe to "a new version finished downloading and is ready to install".
+   *  The runner shows an "Update ready — Restart to update" banner. Returns an
+   *  unsubscribe fn. */
+  onUpdateReady(cb: (info: { version: string }) => void) {
+    const handler = (_e: unknown, info: { version: string }) => cb(info)
+    ipcRenderer.on('update:downloaded', handler)
+    return () => ipcRenderer.removeListener('update:downloaded', handler)
+  },
+  /** Apply the downloaded update now: the main process quits, installs it, and
+   *  relaunches into the new version. Ignored by main while an exam is active. */
+  restartToUpdate() {
+    ipcRenderer.send('update:restart')
+  },
 })
