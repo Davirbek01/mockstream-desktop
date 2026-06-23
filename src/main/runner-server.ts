@@ -12,6 +12,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 
+/** Fixed loopback port for the bundled runner so the served origin is STABLE
+ *  across launches (persisting localStorage: session / unlock code / guest). */
+export const RUNNER_PORT = 17353
+
 const readFile = promisify(fs.readFile)
 const stat = promisify(fs.stat)
 
@@ -122,15 +126,33 @@ export function startRunnerServer(dir: string): Promise<string> {
     })()
   })
 
+  // Serve on a FIXED port so the origin (http://127.0.0.1:PORT) is STABLE across
+  // launches. localStorage — the Supabase sign-in session, the activation-code
+  // unlock (ms_unlock_v2) and the guest name — is keyed PER ORIGIN, so a changing
+  // (ephemeral) port wiped all of it every launch (forcing re-sign-in + re-lock).
+  // A stable origin also lets the fixed 127.0.0.1:PORT be allow-listed in
+  // Supabase for Google OAuth. The single-instance lock means our port is
+  // normally free; if it's ever taken, fall back to an ephemeral port (that one
+  // launch won't persist, but the app still opens).
   return new Promise((resolve, reject) => {
-    server.on('error', reject)
-    server.listen(0, '127.0.0.1', () => {
+    const onListening = () => {
       const addr = server.address()
       if (addr && typeof addr === 'object') {
         resolve(`http://127.0.0.1:${addr.port}/`)
       } else {
         reject(new Error('Failed to determine runner server address'))
       }
-    })
+    }
+    const onError = (err: NodeJS.ErrnoException) => {
+      if (err && err.code === 'EADDRINUSE') {
+        server.removeListener('error', onError)
+        server.once('error', reject)
+        server.listen(0, '127.0.0.1', onListening) // fallback: ephemeral port
+        return
+      }
+      reject(err)
+    }
+    server.on('error', onError)
+    server.listen(RUNNER_PORT, '127.0.0.1', onListening)
   })
 }
