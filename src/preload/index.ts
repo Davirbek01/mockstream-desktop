@@ -55,6 +55,15 @@ contextBridge.exposeInMainWorld('desktop', {
     return () => ipcRenderer.removeListener('lockdown:focus-loss', handler)
   },
 
+  // --- CORS-free text fetch (main process) -------------------------------
+  /** Fetch a text resource via the MAIN process (Node — no browser CORS). Used
+   *  by the runner to load the scoring rubric (mock-stream.com/scoring-prompts.js),
+   *  which sends no CORS header and is otherwise blocked from the 127.0.0.1
+   *  origin. Main allow-lists the URL. Resolves null on any failure. */
+  fetchText(url: string): Promise<string | null> {
+    return ipcRenderer.invoke('net:fetchText', url)
+  },
+
   // --- Auto-update bridge ------------------------------------------------
   /** Subscribe to "a new version finished downloading and is ready to install".
    *  The runner shows an "Update ready — Restart to update" banner. Returns an

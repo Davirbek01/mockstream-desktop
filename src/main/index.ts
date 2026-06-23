@@ -151,6 +151,29 @@ function handleDeepLink(url: string | undefined | null): void {
 
 ipcMain.handle('app:version', () => app.getVersion())
 
+// CORS-free text fetch for the runner's scoring rubric. The browser blocks
+// reading mock-stream.com/scoring-prompts.js from the 127.0.0.1 origin (no CORS
+// header), which broke AI grading on desktop. The main process (Node) has no
+// CORS, so we fetch it here. Allow-listed to the scoring-prompts file only.
+ipcMain.handle('net:fetchText', async (_e, url: unknown): Promise<string | null> => {
+  if (typeof url !== 'string') return null
+  let ok = false
+  try {
+    const u = new URL(url)
+    ok = u.protocol === 'https:' && u.hostname === 'mock-stream.com' && u.pathname === '/scoring-prompts.js'
+  } catch {
+    return null
+  }
+  if (!ok) return null
+  try {
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return null
+    return await res.text()
+  } catch {
+    return null
+  }
+})
+
 // Register the app as the handler for mockstream:// so Windows routes Telegram
 // bridge returns (and the mobile-shared scheme) back to this app once installed.
 // In dev (electron run via electron-vite) argv[1] is the entry script — pass the
