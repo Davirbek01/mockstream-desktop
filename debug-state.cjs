@@ -1,0 +1,15 @@
+const { _electron } = require('@playwright/test')
+;(async () => {
+  const app = await _electron.launch({ args:['out/main/index.js'], env:{...process.env, MOCKSTREAM_RUNNER_URL:'http://localhost:5173'} })
+  const win = await app.firstWindow()
+  try{await win.waitForLoadState('domcontentloaded')}catch{}
+  await win.waitForTimeout(2500)
+  const before = await win.evaluate(()=>({ desktop: !!window.desktop, keys: Object.keys(localStorage), guest: localStorage.getItem('ms_guest_name'), welcome: localStorage.getItem('ms_welcome_seen_v1') }))
+  console.log('BEFORE', JSON.stringify(before))
+  await win.evaluate(()=>localStorage.clear())
+  await win.reload(); await win.waitForTimeout(3000)
+  const after = await win.evaluate(()=>({ keys: Object.keys(localStorage), bodyHas: { welcome:/Welcome to Mock Stream/.test(document.body.innerText), signin:/Continue with Google/.test(document.body.innerText), home:/Pick a skill/.test(document.body.innerText) } }))
+  console.log('AFTER', JSON.stringify(after))
+  await win.screenshot({path:'debug-state.png'})
+  await app.close()
+})().catch(e=>{console.error('ERR',e);process.exit(1)})
