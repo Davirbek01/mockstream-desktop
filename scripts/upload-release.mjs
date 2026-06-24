@@ -12,7 +12,7 @@
 // (same auth the rest of the project uses).
 // ============================================================================
 import { execFileSync } from 'node:child_process'
-import { readdirSync, existsSync } from 'node:fs'
+import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const BUCKET = 'gs://mockstream-desktop-releases'
@@ -23,9 +23,22 @@ if (!existsSync(join(dist, 'latest.yml'))) {
   process.exit(1)
 }
 
-const files = readdirSync(dist).filter(
-  (f) => f === 'latest.yml' || /^MockStream-Setup-.*\.exe(\.blockmap)?$/.test(f),
-)
+// Publish ONLY the current version's artifacts (the feed + this build's
+// installer/blockmap) — not the whole accumulated dist/ backlog. dist/ keeps
+// every version ever built locally; re-uploading all of them made each release
+// a ~40-min sync. electron-updater only needs latest.yml + the version it names.
+const { version } = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'))
+const current = new Set([
+  'latest.yml',
+  `MockStream-Setup-${version}.exe`,
+  `MockStream-Setup-${version}.exe.blockmap`,
+])
+const files = readdirSync(dist).filter((f) => current.has(f))
+
+if (!files.includes(`MockStream-Setup-${version}.exe`)) {
+  console.error(`✗ dist/MockStream-Setup-${version}.exe not found — run \`npm run dist\` first.`)
+  process.exit(1)
+}
 
 for (const f of files) {
   const src = join(dist, f)
