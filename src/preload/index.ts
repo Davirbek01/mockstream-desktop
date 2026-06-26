@@ -18,6 +18,11 @@ contextBridge.exposeInMainWorld('desktop', {
   appVersion: () => ipcRenderer.invoke('app:version'),
   platform: process.platform,
 
+  /** Hardware-backed machine id (hashed in main). Used as the runner's device
+   *  id so guest results history survives app-data clears / reinstalls.
+   *  Resolves '' if the OS GUID can't be read (runner keeps its localStorage id). */
+  machineId: (): Promise<string> => ipcRenderer.invoke('app:machineId'),
+
   // --- Native OS notifications -------------------------------------------
   /** Fire a native desktop notification. The main process shows an Electron
    *  Notification; clicking it focuses the window and (if `route` is given)

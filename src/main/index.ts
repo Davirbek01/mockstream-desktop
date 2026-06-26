@@ -7,6 +7,7 @@ import { extractTgAuthPayload, deepLinkArg } from './deeplink'
 import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
+import { getMachineId } from './machineId'
 
 const PROTOCOL = 'mockstream'
 const APP_ID = 'app.mockstream.desktop'
@@ -150,6 +151,10 @@ function handleDeepLink(url: string | undefined | null): void {
 }
 
 ipcMain.handle('app:version', () => app.getVersion())
+
+// Hardware-backed machine id for the runner's device id (stable across app-data
+// clears / reinstalls, unlike localStorage). Hashed in main; '' if unreadable.
+ipcMain.handle('app:machineId', () => getMachineId())
 
 // CORS-free text fetch for the runner's scoring rubric. The browser blocks
 // reading mock-stream.com/scoring-prompts.js from the 127.0.0.1 origin (no CORS
