@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net, session } from 'electron'
+import { app, BrowserWindow, ipcMain, net, session, Tray, Menu, nativeImage } from 'electron'
 import { join, resolve as resolvePath } from 'node:path'
 import { resolveRunnerTarget } from './runner-target'
 import { loadRunnerConfig } from './config'
@@ -8,11 +8,21 @@ import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
+import { TRAY_ICON_DATA_URL } from './tray-icon'
 
 const PROTOCOL = 'mockstream'
 const APP_ID = 'app.mockstream.desktop'
 
+// Launched at OS login (Windows/macOS register the app with `--hidden`): start in
+// the tray without showing a window so broadcasts/reminders arrive silently in
+// the background until the user opens it from the tray.
+const startHidden = process.argv.includes('--hidden')
+
 let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
+// True once the user really wants to quit (tray Quit / app.quit for update). Until
+// then, closing the window only HIDES it to the tray so notifications keep coming.
+let isQuitting = false
 // The base URL the window is currently serving (local runner server or remote/
 // env URL). Remembered so a Telegram deep link can re-navigate the SAME runner
 // with the #tgAuthResult payload appended, triggering its mount-time completion.
@@ -44,16 +54,32 @@ async function createWindow(): Promise<BrowserWindow> {
     width: 1280,
     height: 800,
     frame: false,
+    // Start hidden when launched at login; otherwise reveal after we maximize so
+    // the window never flashes at the default size first.
+    show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // Keep renderer timers (the notification poll) running while the window is
+      // hidden/minimized to the tray, so broadcasts still surface in the bg.
+      backgroundThrottling: false
     }
   })
 
   // Fill the screen on launch (still resizable). F11 toggles true fullscreen;
   // Esc exits fullscreen.
   win.maximize()
+  if (!startHidden) win.show()
+
+  // Close-to-tray: the window keeps running in the background (so push broadcasts
+  // + practice reminders still fire) until the user explicitly quits from the
+  // tray. A real quit (tray Quit / auto-update relaunch) sets isQuitting first.
+  win.on('close', (e) => {
+    if (isQuitting) return
+    e.preventDefault()
+    win.hide()
+  })
   win.webContents.on('before-input-event', (_e, input) => {
     if (input.type !== 'keyDown') return
     if (input.key === 'F11') {
@@ -150,6 +176,38 @@ function handleDeepLink(url: string | undefined | null): void {
   }
 }
 
+/** Reveal + focus the main window from the tray / a notification click. */
+function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+/** System-tray icon so the app keeps running (and receiving notifications) after
+ *  the window is closed. Left-click opens the window; the menu offers Open/Quit. */
+function createTray(): void {
+  if (tray) return
+  const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL)
+  tray = new Tray(icon)
+  tray.setToolTip('Mock Stream')
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Open Mock Stream', click: () => showMainWindow() },
+      { type: 'separator' },
+      {
+        label: 'Quit',
+        click: () => {
+          isQuitting = true
+          app.quit()
+        },
+      },
+    ]),
+  )
+  tray.on('click', () => showMainWindow())
+  tray.on('double-click', () => showMainWindow())
+}
+
 ipcMain.handle('app:version', () => app.getVersion())
 
 // Hardware-backed machine id for the runner's device id (stable across app-data
@@ -222,6 +280,13 @@ if (!gotTheLock) {
       cb(permission === 'media' || permission === 'audioCapture')
     })
     mainWindow = await createWindow()
+    // Keep running in the system tray after the window is closed, and launch at
+    // OS login (packaged only — never register the dev electron.exe). Combined,
+    // broadcasts + reminders reach the user even with the window closed.
+    createTray()
+    if (app.isPackaged) {
+      app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] })
+    }
     // Cold start via the link on Windows: the URL is in this instance's argv.
     handleDeepLink(deepLinkArg(process.argv))
     // Background auto-update (packaged Windows only; installs on next quit, or
@@ -229,11 +294,24 @@ if (!gotTheLock) {
     attachAutoUpdater(() => mainWindow, () => !!lockdownController?.active)
   })
 
+  // A real quit was requested (tray Quit, or the auto-updater relaunch) — let the
+  // window 'close' handler through instead of hiding to tray.
+  app.on('before-quit', () => {
+    isQuitting = true
+  })
+
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    // The window normally only hides (close-to-tray), so this fires only on a real
+    // quit — honour it everywhere except macOS, where tray apps stay resident.
+    if (process.platform !== 'darwin' && isQuitting) app.quit()
   })
 
   app.on('activate', async () => {
-    if (BrowserWindow.getAllWindows().length === 0) mainWindow = await createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      mainWindow = await createWindow()
+    } else {
+      // Window exists but may be hidden in the tray — reveal it.
+      showMainWindow()
+    }
   })
 }
