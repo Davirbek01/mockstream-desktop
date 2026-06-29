@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Download Mock Stream for Desktop</title>
+<meta name="description" content="Download the Mock Stream desktop app for Windows and macOS — practice CEFR & IELTS exam mocks on a dedicated, distraction-free runner." />
+<link rel="icon" type="image/png" href="icon.png" />
+<style>
+  :root{
+    --bg:#0c0c0f; --bg2:#141418; --card:#17171c; --card-hover:#1d1d24;
+    --border:#26262e; --text:#f4f4f6; --muted:#9a9aa6; --accent:#863bff;
+    --accent-2:#9d5cff; --red:#d23b3b; --blue:#2f5fd2; --ok:#3ad07a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:48px 20px 32px;
+    background:radial-gradient(1200px 600px at 50% -10%,rgba(134,59,255,.18),transparent 60%),var(--bg)}
+  .logo{width:104px;height:104px;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.55);
+    border:1px solid var(--border)}
+  h1{font-size:2.1rem;font-weight:800;margin-top:22px;letter-spacing:-.02em;text-align:center}
+  .tag{color:var(--muted);font-size:1.05rem;margin-top:10px;text-align:center;max-width:520px}
+  .ver{display:inline-block;margin-top:16px;font-size:.82rem;color:var(--accent-2);
+    background:rgba(134,59,255,.12);border:1px solid rgba(134,59,255,.3);
+    padding:4px 12px;border-radius:999px;font-weight:600}
+  .cards{display:flex;gap:20px;margin-top:40px;flex-wrap:wrap;justify-content:center;width:100%;max-width:760px}
+  .card{flex:1 1 320px;background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:28px 26px;transition:.18s;position:relative;display:flex;flex-direction:column}
+  .card:hover{background:var(--card-hover);border-color:#34343f;transform:translateY(-2px)}
+  .card.match{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 14px 40px rgba(134,59,255,.18)}
+  .card .os{display:flex;align-items:center;gap:12px;font-size:1.25rem;font-weight:700}
+  .card .os svg{width:30px;height:30px;flex:none}
+  .meta{color:var(--muted);font-size:.85rem;margin-top:6px}
+  .yours{position:absolute;top:-11px;right:18px;background:var(--accent);color:#fff;
+    font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.03em}
+  .btn{margin-top:20px;display:block;text-align:center;text-decoration:none;
+    background:var(--accent);color:#fff;font-weight:700;font-size:1rem;
+    padding:13px 18px;border-radius:12px;transition:.15s;border:none;cursor:pointer}
+  .btn:hover{background:var(--accent-2)}
+  .btn.soon{background:#26262e;color:var(--muted);cursor:default;pointer-events:none}
+  .note{margin-top:14px;font-size:.8rem;color:var(--muted);line-height:1.45}
+  .note b{color:#cfcfd6;font-weight:600}
+  .reqs{margin-top:48px;max-width:600px;width:100%;text-align:center;color:var(--muted);font-size:.85rem}
+  .reqs h3{color:var(--text);font-size:.95rem;margin-bottom:8px;font-weight:700}
+  footer{margin-top:44px;color:#5b5b66;font-size:.8rem;text-align:center}
+  footer a{color:var(--muted);text-decoration:none}
+  footer a:hover{color:var(--accent-2)}
+  @media (max-width:520px){h1{font-size:1.7rem}body{padding-top:36px}}
+</style>
+</head>
+<body>
+  <img class="logo" src="icon.png" alt="Mock Stream" />
+  <h1>Mock Stream for Desktop</h1>
+  <p class="tag">A dedicated, distraction-free app for practising CEFR &amp; IELTS exam mocks — Listening, Reading, Writing &amp; Speaking — on your computer.</p>
+  <span class="ver" id="ver">Version 1.0.68</span>
+
+  <div class="cards">
+    <!-- Windows -->
+    <div class="card" id="card-win">
+      <span class="yours" id="badge-win" style="display:none">Your system</span>
+      <div class="os">
+        <svg viewBox="0 0 24 24" fill="#4aa3ff"><path d="M3 5.5 10.2 4.5v7H3V5.5Zm0 13L10.2 19.5v-7H3v6Zm8.3 1.2L21 21V12.5h-9.7v7.2ZM11.3 4.3 21 3v8.5h-9.7V4.3Z"/></svg>
+        Windows
+      </div>
+      <div class="meta">Windows 10 / 11 · 64-bit · ~103 MB</div>
+      <a class="btn" id="dl-win" href="https://storage.googleapis.com/mockstream-desktop-releases/MockStream-Setup-1.0.68.exe">Download for Windows</a>
+      <p class="note">⚠️ On first run Windows may say <b>"Windows protected your PC — Unknown publisher."</b> This is normal for new apps — click <b>More info → Run anyway</b> to install. The app is safe.</p>
+    </div>
+
+    <!-- macOS -->
+    <div class="card" id="card-mac">
+      <span class="yours" id="badge-mac" style="display:none">Your system</span>
+      <div class="os">
+        <svg viewBox="0 0 24 24" fill="#e6e6ea"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.5-1-2.5-3.8ZM14.2 5.7c.6-.8 1.1-1.9 1-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2-.5 2.7-1.3Z"/></svg>
+        macOS
+      </div>
+      <div class="meta">macOS 11 Big Sur or later · Intel &amp; Apple Silicon</div>
+      <a class="btn soon" id="dl-mac" href="https://storage.googleapis.com/mockstream-desktop-releases/MockStream-Setup-1.0.68.dmg">Checking availability…</a>
+      <p class="note" id="note-mac">Signed &amp; notarized by Apple — installs cleanly with no security warning.</p>
+    </div>
+  </div>
+
+  <div class="reqs">
+    <h3>How to install</h3>
+    <p><b style="color:#cfcfd6">Windows:</b> run the downloaded <code>.exe</code> → if SmartScreen appears, choose More info → Run anyway. &nbsp;|&nbsp; <b style="color:#cfcfd6">macOS:</b> open the <code>.dmg</code> and drag Mock Stream into Applications.</p>
+    <p style="margin-top:10px">The app updates itself automatically — you only need to download it once.</p>
+  </div>
+
+  <footer>
+    © <span id="yr">2026</span> Mock Stream · <a href="https://storage.googleapis.com/mockstream-desktop-releases/MockStream-Setup-1.0.68.exe">Windows</a> · <a id="foot-mac" href="#">macOS</a>
+  </footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  var ua = navigator.userAgent || '';
+  var isMac = /Mac/i.test(ua) && !/iPhone|iPad/i.test(ua);
+  var isWin = /Windows|Win64|Win32/i.test(ua);
+
+  function highlight(id, badgeId){
+    var c=document.getElementById(id); if(c){c.classList.add('match');
+      var cards=document.querySelector('.cards'); cards.insertBefore(c, cards.firstChild);}
+    var b=document.getElementById(badgeId); if(b) b.style.display='block';
+  }
+  if(isMac) highlight('card-mac','badge-mac');
+  else if(isWin) highlight('card-win','badge-win');
+
+  // Auto-enable the macOS button once the .dmg is published to the bucket
+  // (same-origin HEAD request — no CORS issue when hosted in the same bucket).
+  var macUrl = "https://storage.googleapis.com/mockstream-desktop-releases/MockStream-Setup-1.0.68.dmg";
+  var macBtn = document.getElementById('dl-mac');
+  var footMac = document.getElementById('foot-mac');
+  fetch(macUrl, {method:'HEAD'}).then(function(r){
+    if(r.ok){
+      macBtn.classList.remove('soon');
+      macBtn.textContent = 'Download for macOS';
+      footMac.href = macUrl;
+    } else { throw 0; }
+  }).catch(function(){
+    macBtn.classList.add('soon');
+    macBtn.textContent = 'Available shortly';
+    document.getElementById('note-mac').innerHTML = 'The macOS build is being finalized (Apple notarization). Check back soon — this button enables automatically when it’s ready.';
+    footMac.style.display='none';
+  });
+</script>
+</body>
+</html>
