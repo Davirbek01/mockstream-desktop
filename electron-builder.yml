@@ -37,5 +37,23 @@ win:
   # With a real OV/EV cert from a CA, this removes the SmartScreen "unknown
   # publisher" warning. Without a cert, the build is unsigned (current state).
 mac:
-  target: dmg
+  # dmg = user download · zip = what electron-updater needs for macOS auto-update.
+  # universal = one build runs on both Intel and Apple-Silicon Macs.
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
   category: public.app-category.education
+  # Notarization-ready (direct-download / Developer ID — NOT the Mac App Store, so
+  # no IAP / 3.1.1 rules apply; code-unlock + purchase flows stay as-is). Signing +
+  # notarization run on a macOS GitHub Actions runner (see .github/workflows/release-mac.yml
+  # and SIGNING.md). hardenedRuntime + entitlements are required for notarization.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # notarize:true uses notarytool with APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
+  # APPLE_TEAM_ID from the CI env. The Developer ID Application cert comes from
+  # CSC_LINK (base64 .p12) + CSC_KEY_PASSWORD.
+  notarize: true

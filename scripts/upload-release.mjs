@@ -26,23 +26,35 @@ if (!existsSync(join(dist, 'latest.yml'))) {
 // Publish ONLY the current version's artifacts (the feed + this build's
 // installer/blockmap) — not the whole accumulated dist/ backlog. dist/ keeps
 // every version ever built locally; re-uploading all of them made each release
-// a ~40-min sync. electron-updater only needs latest.yml + the version it names.
+// a ~40-min sync. electron-updater only needs the feed(s) + the versions named.
+//
+// Platform-agnostic: a Windows build leaves latest.yml + .exe (+ .blockmap); a
+// macOS build (CI runner) leaves latest-mac.yml + .dmg + .zip (+ blockmaps). We
+// upload whichever of these exist, so the same script serves both pipelines.
 const { version } = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'))
-const current = new Set([
-  'latest.yml',
+const FEEDS = ['latest.yml', 'latest-mac.yml']
+const candidates = new Set([
+  ...FEEDS,
+  // Windows
   `MockStream-Setup-${version}.exe`,
   `MockStream-Setup-${version}.exe.blockmap`,
+  // macOS
+  `MockStream-Setup-${version}.dmg`,
+  `MockStream-Setup-${version}.dmg.blockmap`,
+  `MockStream-Setup-${version}.zip`,
+  `MockStream-Setup-${version}.zip.blockmap`,
 ])
-const files = readdirSync(dist).filter((f) => current.has(f))
+const files = readdirSync(dist).filter((f) => candidates.has(f))
 
-if (!files.includes(`MockStream-Setup-${version}.exe`)) {
-  console.error(`✗ dist/MockStream-Setup-${version}.exe not found — run \`npm run dist\` first.`)
+const installers = files.filter((f) => !FEEDS.includes(f))
+if (!installers.length) {
+  console.error(`✗ No v${version} installer artifacts found in dist/ — run \`npm run dist\` first.`)
   process.exit(1)
 }
 
 for (const f of files) {
   const src = join(dist, f)
-  const cache = f === 'latest.yml' ? 'no-cache,max-age=0' : 'public,max-age=300'
+  const cache = FEEDS.includes(f) ? 'no-cache,max-age=0' : 'public,max-age=300'
   console.log(`↑ ${f}`)
   execFileSync('gcloud', ['storage', 'cp', src, `${BUCKET}/`, `--cache-control=${cache}`], {
     stdio: 'inherit',
