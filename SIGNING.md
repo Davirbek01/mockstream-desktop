@@ -40,9 +40,27 @@ vendor's docs, then `npm run dist`.
 Right-click the produced `.exe` → **Properties → Digital Signatures** tab should list your
 certificate. Or: `signtool verify /pa "dist\Mock Stream Setup 1.0.0.exe"`.
 
+## Decision (2026-06-29): ship Windows UNSIGNED for now
+
+A cert is **not required to install** — an unsigned build runs fine; Windows just shows the
+SmartScreen **"Windows protected your PC / Unknown publisher"** popup, and the user clicks
+**More info → Run anyway**. That's cosmetic friction, not a blocker.
+
+Until the app has real paying users, the certificate cost isn't justified, so **v1 ships
+unsigned**. The download page must carry a short reassurance note (see below). When revenue
+supports it, add signing — recommended **Azure Trusted Signing (~$10/mo)**: cloud-based, no
+hardware token, near-EV trust; the only hurdle is identity verification (registered business
+with ~3 yrs history, or the individual-developer option). Once you have it, set the
+`win.signtoolOptions` / cloud-sign hook and rebuild — existing users just get a cleaner update.
+
+**Download-page note to include (TODO when the page is built):**
+> ⚠️ On first run Windows may say *"Unknown publisher"*. This is normal for new apps — click
+> **More info → Run anyway** to install. The app is safe.
+
 ## Status (Windows)
 - ✅ Build pipeline is signing-ready (`electron-builder.yml` reads `CSC_LINK`/`CSC_KEY_PASSWORD`).
-- ⛔ Not signed yet — provide a certificate as above.
+- ✅ **Decision made: ship unsigned for v1** (no cert cost pre-revenue). Add Azure Trusted Signing later.
+- ⛔ Not signed — intentional for now. Plug in a cert (above) when revenue justifies it.
 
 ---
 
