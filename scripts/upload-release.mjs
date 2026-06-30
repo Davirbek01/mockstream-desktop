@@ -18,8 +18,11 @@ import { join } from 'node:path'
 const BUCKET = 'gs://mockstream-desktop-releases'
 const dist = join(process.cwd(), 'dist')
 
-if (!existsSync(join(dist, 'latest.yml'))) {
-  console.error('✗ dist/latest.yml not found — run `npm run dist` first.')
+// A Windows build leaves latest.yml; a macOS build leaves latest-mac.yml. Accept
+// either so this guard doesn't reject a valid mac-only build (the bug that made
+// the macOS CI publish step fail with "dist/latest.yml not found").
+if (!existsSync(join(dist, 'latest.yml')) && !existsSync(join(dist, 'latest-mac.yml'))) {
+  console.error('✗ No update feed (latest.yml / latest-mac.yml) found in dist/ — run `npm run dist` first.')
   process.exit(1)
 }
 
