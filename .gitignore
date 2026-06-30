@@ -22,5 +22,7 @@ capture-*.cjs
 grab-*.cjs
 *.png
 
-# ...but the app icon IS a required build resource — keep it tracked.
+# ...but the app icons ARE required build resources — keep them tracked.
 !build/icon.png
+!build/bek/
+!build/bek/icon.png

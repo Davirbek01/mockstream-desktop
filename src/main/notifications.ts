@@ -30,7 +30,7 @@ export const REMINDER_REPEAT_MS = 3 * 60 * 60 * 1000 // every 3 hours
 export const RECENT_NOTIFY_QUIET_MS = 10 * 60 * 1000 // 10 min
 
 export const PRACTICE_REMINDER_TITLE = '📚 Ready to practice?'
-export const PRACTICE_REMINDER_BODY = 'Open a mock on Mock Stream.'
+export const PRACTICE_REMINDER_BODY = `Open a mock on ${__BRAND_NAME__}.`
 
 export interface ReminderDecisionInput {
   /** True while a real exam route is active (lockdown engaged). */

@@ -16,7 +16,10 @@
     "predist": "npm --prefix ../mockstream-runner run build",
     "dist": "electron-vite build && electron-builder",
     "release": "npm run dist && node scripts/upload-release.mjs",
-    "publish:feed": "node scripts/upload-release.mjs"
+    "publish:feed": "node scripts/upload-release.mjs",
+    "runner:bek": "cross-env VITE_CENTER_ID=bek npm --prefix ../mockstream-runner run build",
+    "dist:bek": "npm run runner:bek && cross-env FLAVOR=bek electron-vite build && electron-builder --config electron-builder.bek.yml",
+    "release:bek": "npm run dist:bek && cross-env RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.0",
     "@types/node": "^25.9.3",
+    "cross-env": "^10.1.0",
     "electron": "^42.4.1",
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",

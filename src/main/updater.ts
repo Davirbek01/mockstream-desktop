@@ -56,7 +56,7 @@ export function attachAutoUpdater(
     if (Notification.isSupported()) {
       new Notification({
         title: 'Update ready',
-        body: `Mock Stream ${info.version} will install automatically next time you close the app.`,
+        body: `${__BRAND_NAME__} ${info.version} will install automatically next time you close the app.`,
       }).show()
     }
     try {

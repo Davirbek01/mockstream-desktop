@@ -1,0 +1,46 @@
+# Bekzods Multilevel — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.bek.yml` AFTER the runner
+# is built with VITE_CENTER_ID=bek and the main bundle with FLAVOR=bek (see the
+# dist:bek npm script). Mirrors electron-builder.yml but with bek identity, its
+# own icon, deep-link scheme, and its OWN release bucket so bek and Mock Stream
+# auto-updates never cross.
+appId: app.mockstream.bek.desktop
+productName: Bekzods Multilevel
+directories:
+  output: dist
+  buildResources: build
+artifactName: Bekzods-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/bekzods-desktop-releases
+# bek's OWN custom protocol (matches the mobile bek scheme) for the Telegram
+# bridge deep-link return — never collides with Mock Stream's `mockstream://`.
+protocols:
+  - name: Bekzods Multilevel Protocol
+    schemes:
+      - mockstreambek
+files:
+  - out/**/*
+# Bundle the bek-flavored runner build (built with VITE_CENTER_ID=bek).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/bek/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/bek/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: true

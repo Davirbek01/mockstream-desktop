@@ -15,7 +15,11 @@ import { execFileSync } from 'node:child_process'
 import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const BUCKET = 'gs://mockstream-desktop-releases'
+// Flavor-aware: a clone (e.g. bek) publishes to its OWN bucket + artifact prefix
+// so its auto-update feed never crosses Mock Stream's. Defaults = Mock Stream.
+//   RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup
+const BUCKET = process.env.RELEASE_BUCKET || 'gs://mockstream-desktop-releases'
+const PREFIX = process.env.RELEASE_PREFIX || 'MockStream-Setup'
 const dist = join(process.cwd(), 'dist')
 
 // A Windows build leaves latest.yml; a macOS build leaves latest-mac.yml. Accept
@@ -39,13 +43,13 @@ const FEEDS = ['latest.yml', 'latest-mac.yml']
 const candidates = new Set([
   ...FEEDS,
   // Windows
-  `MockStream-Setup-${version}.exe`,
-  `MockStream-Setup-${version}.exe.blockmap`,
+  `${PREFIX}-${version}.exe`,
+  `${PREFIX}-${version}.exe.blockmap`,
   // macOS
-  `MockStream-Setup-${version}.dmg`,
-  `MockStream-Setup-${version}.dmg.blockmap`,
-  `MockStream-Setup-${version}.zip`,
-  `MockStream-Setup-${version}.zip.blockmap`,
+  `${PREFIX}-${version}.dmg`,
+  `${PREFIX}-${version}.dmg.blockmap`,
+  `${PREFIX}-${version}.zip`,
+  `${PREFIX}-${version}.zip.blockmap`,
 ])
 const files = readdirSync(dist).filter((f) => candidates.has(f))
 

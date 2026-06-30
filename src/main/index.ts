@@ -8,10 +8,11 @@ import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
-import { TRAY_ICON_DATA_URL } from './tray-icon'
+import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL } from './tray-icon'
 
-const PROTOCOL = 'mockstream'
-const APP_ID = 'app.mockstream.desktop'
+const PROTOCOL = __BRAND_PROTOCOL__
+const APP_ID = __BRAND_APP_ID__
+const BRAND_NAME = __BRAND_NAME__
 
 // Launched at OS login (Windows/macOS register the app with `--hidden`): start in
 // the tray without showing a window so broadcasts/reminders arrive silently in
@@ -188,12 +189,14 @@ function showMainWindow(): void {
  *  the window is closed. Left-click opens the window; the menu offers Open/Quit. */
 function createTray(): void {
   if (tray) return
-  const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL)
+  const icon = nativeImage.createFromDataURL(
+    __BRAND_PROTOCOL__ === 'mockstreambek' ? BEK_TRAY_ICON_DATA_URL : TRAY_ICON_DATA_URL
+  )
   tray = new Tray(icon)
-  tray.setToolTip('Mock Stream')
+  tray.setToolTip(BRAND_NAME)
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Open Mock Stream', click: () => showMainWindow() },
+      { label: `Open ${BRAND_NAME}`, click: () => showMainWindow() },
       { type: 'separator' },
       {
         label: 'Quit',
