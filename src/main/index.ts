@@ -182,7 +182,12 @@ function showMainWindow(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
+  // Windows foreground-lock: a background process (tray click / re-launch) often
+  // can't steal focus, so the window would appear BEHIND other windows or just
+  // flash the taskbar. A brief alwaysOnTop toggle reliably pops it to the front.
+  mainWindow.setAlwaysOnTop(true)
   mainWindow.focus()
+  mainWindow.setAlwaysOnTop(false)
 }
 
 /** System-tray icon so the app keeps running (and receiving notifications) after
@@ -259,10 +264,11 @@ if (!gotTheLock) {
 } else {
   // Windows delivers the deep link as a command-line arg to the second instance.
   app.on('second-instance', (_event, argv) => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.focus()
-    }
+    // Re-launching (e.g. tapping the desktop icon) while the app is hidden to the
+    // tray must SHOW the window — a hidden window can't be focused, so the old
+    // restore()+focus() did nothing and the app looked like it wouldn't reopen.
+    // showMainWindow() restores-if-minimized, shows, and focuses.
+    showMainWindow()
     handleDeepLink(deepLinkArg(argv))
   })
 
