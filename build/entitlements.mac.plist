@@ -15,5 +15,9 @@
     <!-- The runner fetches mock content + audio over the network. -->
     <key>com.apple.security.network.client</key>
     <true/>
+    <!-- Microphone — the Speaking exam records spoken answers. Without this the
+         hardened runtime blocks audio input on macOS (mic dead, no waveform). -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
   </dict>
 </plist>

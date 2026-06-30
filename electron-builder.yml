@@ -53,6 +53,10 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # macOS shows this when the Speaking exam first requests the mic; without it
+  # the OS silently denies microphone access (no prompt, no waveform).
+  extendInfo:
+    NSMicrophoneUsageDescription: Mock Stream needs the microphone to record your spoken answers during Speaking mock exams.
   # notarize:true uses notarytool with APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
   # APPLE_TEAM_ID from the CI env. The Developer ID Application cert comes from
   # CSC_LINK (base64 .p12) + CSC_KEY_PASSWORD.

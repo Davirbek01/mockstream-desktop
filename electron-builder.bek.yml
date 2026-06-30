@@ -43,4 +43,7 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Bekzods Multilevel needs the microphone to record your spoken answers during Speaking mock exams.
   notarize: true
