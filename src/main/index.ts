@@ -8,7 +8,7 @@ import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
-import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL } from './tray-icon'
+import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL, RECORD_TRAY_ICON_DATA_URL } from './tray-icon'
 
 const PROTOCOL = __BRAND_PROTOCOL__
 const APP_ID = __BRAND_APP_ID__
@@ -194,8 +194,12 @@ function showMainWindow(): void {
  *  the window is closed. Left-click opens the window; the menu offers Open/Quit. */
 function createTray(): void {
   if (tray) return
+  const TRAY_BY_PROTOCOL: Record<string, string> = {
+    mockstreambek: BEK_TRAY_ICON_DATA_URL,
+    mockstreamrecord: RECORD_TRAY_ICON_DATA_URL,
+  }
   const icon = nativeImage.createFromDataURL(
-    __BRAND_PROTOCOL__ === 'mockstreambek' ? BEK_TRAY_ICON_DATA_URL : TRAY_ICON_DATA_URL
+    TRAY_BY_PROTOCOL[__BRAND_PROTOCOL__] || TRAY_ICON_DATA_URL
   )
   tray = new Tray(icon)
   tray.setToolTip(BRAND_NAME)

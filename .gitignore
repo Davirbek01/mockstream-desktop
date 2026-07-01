@@ -26,3 +26,5 @@ grab-*.cjs
 !build/icon.png
 !build/bek/
 !build/bek/icon.png
+!build/record/
+!build/record/icon.png

@@ -19,7 +19,10 @@
     "publish:feed": "node scripts/upload-release.mjs",
     "runner:bek": "cross-env VITE_CENTER_ID=bek npm --prefix ../mockstream-runner run build",
     "dist:bek": "npm run runner:bek && cross-env FLAVOR=bek electron-vite build && electron-builder --config electron-builder.bek.yml",
-    "release:bek": "npm run dist:bek && cross-env RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup node scripts/upload-release.mjs"
+    "release:bek": "npm run dist:bek && cross-env RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup node scripts/upload-release.mjs",
+    "runner:record": "cross-env VITE_CENTER_ID=record npm --prefix ../mockstream-runner run build",
+    "dist:record": "npm run runner:record && cross-env FLAVOR=record electron-vite build && electron-builder --config electron-builder.record.yml",
+    "release:record": "npm run dist:record && cross-env RELEASE_BUCKET=gs://multilevelrecord-desktop-releases RELEASE_PREFIX=MultilevelRecord-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",

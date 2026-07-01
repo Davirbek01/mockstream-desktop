@@ -14,6 +14,7 @@ const FLAVOR = process.env.FLAVOR || 'mock_stream'
 const BRANDS: Record<string, { name: string; protocol: string; appId: string }> = {
   mock_stream: { name: 'Mock Stream', protocol: 'mockstream', appId: 'app.mockstream.desktop' },
   bek: { name: 'Bekzods Multilevel', protocol: 'mockstreambek', appId: 'app.mockstream.bek.desktop' },
+  record: { name: 'Cambridge Innovation School', protocol: 'mockstreamrecord', appId: 'app.mockstream.record.desktop' },
 }
 const brand = BRANDS[FLAVOR] || BRANDS.mock_stream
 const brandDefine = {

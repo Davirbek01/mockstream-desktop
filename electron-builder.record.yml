@@ -1,0 +1,50 @@
+# Multilevel Record — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.record.yml` AFTER the
+# runner is built with VITE_CENTER_ID=record and the main bundle with
+# FLAVOR=record (see the dist:record npm script). Mirrors electron-builder.yml
+# but with Multilevel Record identity, its own icon, deep-link scheme, and its
+# OWN release bucket so record and Mock Stream auto-updates never cross.
+appId: app.mockstream.record.desktop
+productName: Cambridge Innovation School
+directories:
+  output: dist
+  buildResources: build
+artifactName: MultilevelRecord-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/multilevelrecord-desktop-releases
+# record's OWN custom protocol (matches the mobile record scheme) for the
+# Telegram bridge deep-link return — never collides with Mock Stream's
+# `mockstream://`.
+protocols:
+  - name: Multilevel Record Protocol
+    schemes:
+      - mockstreamrecord
+files:
+  - out/**/*
+# Bundle the record-flavored runner build (built with VITE_CENTER_ID=record).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/record/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/record/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Cambridge Innovation School needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true
