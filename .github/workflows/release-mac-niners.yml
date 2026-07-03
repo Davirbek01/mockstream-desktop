@@ -1,0 +1,67 @@
+name: Release (macOS) - Niners Academy
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: Release notes / reason (optional)
+        required: false
+
+jobs:
+  build-mac-niners:
+    runs-on: macos-14
+    steps:
+      - name: Check out desktop
+        uses: actions/checkout@v4
+        with:
+          path: mockstream-desktop
+      - name: Check out runner (bundled into the app)
+        uses: actions/checkout@v4
+        with:
+          repository: Davirbek01/mockstream-runner
+          token: ${{ secrets.RUNNER_REPO_TOKEN }}
+          path: mockstream-runner
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install runner deps
+        working-directory: mockstream-runner
+        run: npm ci
+      - name: Install desktop deps
+        working-directory: mockstream-desktop
+        run: npm ci
+      - name: Import Developer ID certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MAC_CSC_LINK }}
+          p12-password: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+      - name: Build, sign & notarize niners (universal dmg + zip)
+        working-directory: mockstream-desktop
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run dist:niners
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Publish to niners GCS release bucket
+        working-directory: mockstream-desktop
+        env:
+          RELEASE_BUCKET: gs://niners-desktop-releases
+          RELEASE_PREFIX: NinersAcademy-Setup
+        run: node scripts/upload-release.mjs
+      - name: Upload build artifacts (backup)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: niners-mac-release
+          path: |
+            mockstream-desktop/dist/*.dmg
+            mockstream-desktop/dist/*.zip
+            mockstream-desktop/dist/latest-mac.yml
+          if-no-files-found: ignore
