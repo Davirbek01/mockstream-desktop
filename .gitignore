@@ -28,3 +28,5 @@ grab-*.cjs
 !build/bek/icon.png
 !build/record/
 !build/record/icon.png
+!build/niners/
+!build/niners/icon.png
