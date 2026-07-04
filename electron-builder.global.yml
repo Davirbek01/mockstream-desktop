@@ -1,0 +1,50 @@
+# Global Education LC — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.global.yml` AFTER the
+# runner is built with VITE_CENTER_ID=global and the main bundle with
+# FLAVOR=global (see the dist:global npm script). Mirrors electron-builder.yml
+# but with Global Education identity, its own icon, deep-link scheme, and its
+# OWN release bucket so global and Mock Stream auto-updates never cross.
+appId: app.mockstream.global.desktop
+productName: Global Education LC
+directories:
+  output: dist
+  buildResources: build
+artifactName: GlobalEducation-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/global-education-desktop-releases
+# global's OWN custom protocol (matches the mobile global scheme) for the
+# Telegram bridge deep-link return — never collides with Mock Stream's
+# `mockstream://`.
+protocols:
+  - name: Global Education Protocol
+    schemes:
+      - mockstreamglobal
+files:
+  - out/**/*
+# Bundle the global-flavored runner build (built with VITE_CENTER_ID=global).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/global/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/global/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Global Education LC needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true

@@ -25,7 +25,10 @@
     "release:record": "npm run dist:record && cross-env RELEASE_BUCKET=gs://multilevelrecord-desktop-releases RELEASE_PREFIX=MultilevelRecord-Setup node scripts/upload-release.mjs",
     "runner:niners": "cross-env VITE_CENTER_ID=niners npm --prefix ../mockstream-runner run build",
     "dist:niners": "npm run runner:niners && cross-env FLAVOR=niners electron-vite build && electron-builder --config electron-builder.niners.yml",
-    "release:niners": "npm run dist:niners && cross-env RELEASE_BUCKET=gs://niners-desktop-releases RELEASE_PREFIX=NinersAcademy-Setup node scripts/upload-release.mjs"
+    "release:niners": "npm run dist:niners && cross-env RELEASE_BUCKET=gs://niners-desktop-releases RELEASE_PREFIX=NinersAcademy-Setup node scripts/upload-release.mjs",
+    "runner:global": "cross-env VITE_CENTER_ID=global npm --prefix ../mockstream-runner run build",
+    "dist:global": "npm run runner:global && cross-env FLAVOR=global electron-vite build && electron-builder --config electron-builder.global.yml",
+    "release:global": "npm run dist:global && cross-env RELEASE_BUCKET=gs://global-education-desktop-releases RELEASE_PREFIX=GlobalEducation-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",

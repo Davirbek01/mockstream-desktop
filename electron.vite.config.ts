@@ -16,6 +16,7 @@ const BRANDS: Record<string, { name: string; protocol: string; appId: string }> 
   bek: { name: 'Bekzods Multilevel', protocol: 'mockstreambek', appId: 'app.mockstream.bek.desktop' },
   record: { name: 'Cambridge Innovation School', protocol: 'mockstreamrecord', appId: 'app.mockstream.record.desktop' },
   niners: { name: 'Niners Academy', protocol: 'mockstreamniners', appId: 'app.mockstream.niners.desktop' },
+  global: { name: 'Global Education LC', protocol: 'mockstreamglobal', appId: 'app.mockstream.global.desktop' },
 }
 const brand = BRANDS[FLAVOR] || BRANDS.mock_stream
 const brandDefine = {
