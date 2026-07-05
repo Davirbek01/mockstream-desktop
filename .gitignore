@@ -34,3 +34,5 @@ grab-*.cjs
 !build/global/icon.png
 !build/achievers/
 !build/achievers/icon.png
+!build/muzaffars/
+!build/muzaffars/icon.png

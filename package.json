@@ -31,7 +31,10 @@
     "release:global": "npm run dist:global && cross-env RELEASE_BUCKET=gs://global-education-desktop-releases RELEASE_PREFIX=GlobalEducation-Setup node scripts/upload-release.mjs",
     "runner:achievers": "cross-env VITE_CENTER_ID=achievers npm --prefix ../mockstream-runner run build",
     "dist:achievers": "npm run runner:achievers && cross-env FLAVOR=achievers electron-vite build && electron-builder --config electron-builder.achievers.yml",
-    "release:achievers": "npm run dist:achievers && cross-env RELEASE_BUCKET=gs://achievers-desktop-releases RELEASE_PREFIX=AchieversAcademy-Setup node scripts/upload-release.mjs"
+    "release:achievers": "npm run dist:achievers && cross-env RELEASE_BUCKET=gs://achievers-desktop-releases RELEASE_PREFIX=AchieversAcademy-Setup node scripts/upload-release.mjs",
+    "runner:muzaffars": "cross-env VITE_CENTER_ID=muzaffars npm --prefix ../mockstream-runner run build",
+    "dist:muzaffars": "npm run runner:muzaffars && cross-env FLAVOR=muzaffars electron-vite build && electron-builder --config electron-builder.muzaffars.yml",
+    "release:muzaffars": "npm run dist:muzaffars && cross-env RELEASE_BUCKET=gs://muzaffars-desktop-releases RELEASE_PREFIX=MuzaffarsEnglish-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",

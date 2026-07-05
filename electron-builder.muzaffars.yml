@@ -1,0 +1,50 @@
+# Muzaffar's English — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.muzaffars.yml` AFTER the
+# runner is built with VITE_CENTER_ID=muzaffars and the main bundle with
+# FLAVOR=muzaffars (see the dist:muzaffars npm script). Mirrors electron-builder.yml
+# but with Muzaffar's English identity, its own icon, deep-link scheme, and its
+# OWN release bucket so muzaffars and Mock Stream auto-updates never cross.
+appId: app.mockstream.muzaffars.desktop
+productName: Muzaffars English
+directories:
+  output: dist
+  buildResources: build
+artifactName: MuzaffarsEnglish-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/muzaffars-desktop-releases
+# muzaffars' OWN custom protocol (matches the mobile muzaffars scheme) for the
+# Telegram bridge deep-link return — never collides with Mock Stream's
+# `mockstream://`.
+protocols:
+  - name: Muzaffars English Protocol
+    schemes:
+      - mockstreammuzaffars
+files:
+  - out/**/*
+# Bundle the muzaffars-flavored runner build (built with VITE_CENTER_ID=muzaffars).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/muzaffars/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/muzaffars/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Muzaffar's English needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true

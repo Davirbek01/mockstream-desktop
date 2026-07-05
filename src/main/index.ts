@@ -8,7 +8,7 @@ import { attachLockdown } from './lockdown'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
-import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL, RECORD_TRAY_ICON_DATA_URL, NINERS_TRAY_ICON_DATA_URL, GLOBAL_TRAY_ICON_DATA_URL, ACHIEVERS_TRAY_ICON_DATA_URL } from './tray-icon'
+import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL, RECORD_TRAY_ICON_DATA_URL, NINERS_TRAY_ICON_DATA_URL, GLOBAL_TRAY_ICON_DATA_URL, ACHIEVERS_TRAY_ICON_DATA_URL, MUZAFFARS_TRAY_ICON_DATA_URL } from './tray-icon'
 
 const PROTOCOL = __BRAND_PROTOCOL__
 const APP_ID = __BRAND_APP_ID__
@@ -200,6 +200,7 @@ function createTray(): void {
     mockstreamniners: NINERS_TRAY_ICON_DATA_URL,
     mockstreamglobal: GLOBAL_TRAY_ICON_DATA_URL,
     mockstreamachievers: ACHIEVERS_TRAY_ICON_DATA_URL,
+    mockstreammuzaffars: MUZAFFARS_TRAY_ICON_DATA_URL,
   }
   const icon = nativeImage.createFromDataURL(
     TRAY_BY_PROTOCOL[__BRAND_PROTOCOL__] || TRAY_ICON_DATA_URL
