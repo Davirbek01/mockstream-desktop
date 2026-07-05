@@ -1,0 +1,50 @@
+# Achievers Academy — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.achievers.yml` AFTER the
+# runner is built with VITE_CENTER_ID=achievers and the main bundle with
+# FLAVOR=achievers (see the dist:achievers npm script). Mirrors electron-builder.yml
+# but with Achievers Academy identity, its own icon, deep-link scheme, and its
+# OWN release bucket so achievers and Mock Stream auto-updates never cross.
+appId: app.mockstream.achievers.desktop
+productName: Achievers Academy
+directories:
+  output: dist
+  buildResources: build
+artifactName: AchieversAcademy-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/achievers-desktop-releases
+# achievers' OWN custom protocol (matches the mobile achievers scheme) for the
+# Telegram bridge deep-link return — never collides with Mock Stream's
+# `mockstream://`.
+protocols:
+  - name: Achievers Academy Protocol
+    schemes:
+      - mockstreamachievers
+files:
+  - out/**/*
+# Bundle the achievers-flavored runner build (built with VITE_CENTER_ID=achievers).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/achievers/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/achievers/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Achievers Academy needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true

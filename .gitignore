@@ -32,3 +32,5 @@ grab-*.cjs
 !build/niners/icon.png
 !build/global/
 !build/global/icon.png
+!build/achievers/
+!build/achievers/icon.png

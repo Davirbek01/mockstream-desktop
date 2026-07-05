@@ -28,7 +28,10 @@
     "release:niners": "npm run dist:niners && cross-env RELEASE_BUCKET=gs://niners-desktop-releases RELEASE_PREFIX=NinersAcademy-Setup node scripts/upload-release.mjs",
     "runner:global": "cross-env VITE_CENTER_ID=global npm --prefix ../mockstream-runner run build",
     "dist:global": "npm run runner:global && cross-env FLAVOR=global electron-vite build && electron-builder --config electron-builder.global.yml",
-    "release:global": "npm run dist:global && cross-env RELEASE_BUCKET=gs://global-education-desktop-releases RELEASE_PREFIX=GlobalEducation-Setup node scripts/upload-release.mjs"
+    "release:global": "npm run dist:global && cross-env RELEASE_BUCKET=gs://global-education-desktop-releases RELEASE_PREFIX=GlobalEducation-Setup node scripts/upload-release.mjs",
+    "runner:achievers": "cross-env VITE_CENTER_ID=achievers npm --prefix ../mockstream-runner run build",
+    "dist:achievers": "npm run runner:achievers && cross-env FLAVOR=achievers electron-vite build && electron-builder --config electron-builder.achievers.yml",
+    "release:achievers": "npm run dist:achievers && cross-env RELEASE_BUCKET=gs://achievers-desktop-releases RELEASE_PREFIX=AchieversAcademy-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",
