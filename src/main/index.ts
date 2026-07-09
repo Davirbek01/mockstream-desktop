@@ -54,7 +54,12 @@ async function createWindow(): Promise<BrowserWindow> {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    frame: false,
+    // Native window chrome so users get the standard OS controls: minimize /
+    // maximize (resize) / close on Windows & Linux, traffic lights on macOS.
+    // (Exam lockdown still engages kiosk fullscreen, which hides the frame while
+    // a test is active — see attachLockdown below.)
+    frame: true,
+    title: BRAND_NAME,
     // Start hidden when launched at login; otherwise reveal after we maximize so
     // the window never flashes at the default size first.
     show: false,
@@ -92,6 +97,13 @@ async function createWindow(): Promise<BrowserWindow> {
 
   // No application menu — also strips the default reload/devtools accelerators.
   win.setMenu(null)
+
+  // Keep the native title bar showing the brand — don't let the runner page's
+  // <title> ("mockstream-runner") leak into the window chrome.
+  win.on('page-title-updated', (e) => {
+    e.preventDefault()
+    win.setTitle(BRAND_NAME)
+  })
 
   // Secure exam lockdown: kiosk fullscreen + focus-loss flag + escape-route
   // blocking, engaged only while a real exam route is active (detect-and-flag).
