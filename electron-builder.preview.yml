@@ -1,0 +1,53 @@
+# Mock Stream — PREVIEW desktop build config.
+# ----------------------------------------------------------------------------
+# A closed preview/staging app for Mock Stream (mock_stream centre) that installs
+# SIDE-BY-SIDE with the production desktop app and auto-updates from its OWN
+# bucket, so preview builds can be soak-tested for days before promoting the same
+# code to production (`npm run release` for Windows + the Mac CI). Mirrors the
+# clone-flavor configs (own appId + own release bucket) but keeps Mock Stream's
+# branding + centre — only the identity/feed differ.
+#
+# Used via `electron-builder --config electron-builder.preview.yml` AFTER the
+# runner is built with VITE_PREVIEW=1 (see the dist:preview npm script). The
+# runner shows a PREVIEW badge in that build.
+appId: app.mockstream.desktop.preview
+productName: Mock Stream Preview
+directories:
+  output: dist
+  buildResources: build
+artifactName: MockStreamPreview-Setup-${version}.${ext}
+publish:
+  provider: generic
+  url: https://storage.googleapis.com/mockstream-desktop-preview-releases
+# Keeps Mock Stream's `mockstream://` scheme so the Telegram/Google sign-in
+# bridge deep-link return (already allow-listed for that scheme) works in the
+# preview app too. On a machine with BOTH installed, the OS routes the scheme to
+# whichever registered last — acceptable for a single-tester closed preview.
+protocols:
+  - name: Mock Stream Protocol
+    schemes:
+      - mockstream
+files:
+  - out/**/*
+# Bundle the runner's static SPA build (built with VITE_PREVIEW=1).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: Mock Stream Preview needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true

@@ -1,6 +1,6 @@
 {
   "name": "mockstream-desktop",
-  "version": "1.0.82",
+  "version": "1.0.95",
   "private": true,
   "description": "Electron desktop client for the Mock Stream exam platform (Windows + macOS).",
   "main": "out/main/index.js",
@@ -17,6 +17,9 @@
     "dist": "electron-vite build && electron-builder",
     "release": "npm run dist && node scripts/upload-release.mjs",
     "publish:feed": "node scripts/upload-release.mjs",
+    "runner:preview": "cross-env VITE_PREVIEW=1 npm --prefix ../mockstream-runner run build",
+    "dist:preview": "npm run runner:preview && electron-vite build && electron-builder --config electron-builder.preview.yml",
+    "release:preview": "npm run dist:preview && cross-env RELEASE_BUCKET=gs://mockstream-desktop-preview-releases RELEASE_PREFIX=MockStreamPreview-Setup node scripts/upload-release.mjs",
     "runner:bek": "cross-env VITE_CENTER_ID=bek npm --prefix ../mockstream-runner run build",
     "dist:bek": "npm run runner:bek && cross-env FLAVOR=bek electron-vite build && electron-builder --config electron-builder.bek.yml",
     "release:bek": "npm run dist:bek && cross-env RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup node scripts/upload-release.mjs",
