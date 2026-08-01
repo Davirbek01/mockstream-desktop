@@ -63,7 +63,10 @@ for (const f of files) {
   const src = join(dist, f)
   const cache = FEEDS.includes(f) ? 'no-cache,max-age=0' : 'public,max-age=300'
   console.log(`↑ ${f}`)
-  execFileSync('gcloud', ['storage', 'cp', src, `${BUCKET}/`, `--cache-control=${cache}`], {
+  // `shell: true` joins these into a shell command line, so any path containing
+  // spaces (e.g. a repo checked out under "Mock Stream Mega") MUST be quoted or
+  // the shell re-splits it and gcloud sees several bogus source URLs.
+  execFileSync('gcloud', ['storage', 'cp', `"${src}"`, `"${BUCKET}/"`, `--cache-control=${cache}`], {
     stdio: 'inherit',
     shell: true,
   })
