@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('desktop', {
   },
   /** Running focus-loss count for the current exam (mirrored locally). */
   getFocusLossCount: () => focusLossCount,
+  // Results mounted → main releases the kiosk (see lockdown.ts).
+  examFinished: () => ipcRenderer.send('lockdown:exam-finished'),
   /** Subscribe to lockdown active/count changes. Returns an unsubscribe fn. */
   onLockdownState(cb: (state: { active: boolean; focusLossCount: number }) => void) {
     const handler = (_e: unknown, state: { active: boolean; focusLossCount: number }) => {

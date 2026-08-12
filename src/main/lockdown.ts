@@ -164,6 +164,13 @@ export function attachLockdown(
   ipcMain.handle('lockdown:get-count', () => focusLossCount)
   ipcMain.handle('lockdown:get-active', () => active)
 
+  // The results view renders on the SAME route as the exam (state swap, no
+  // navigation), so the URL-based gate above cannot see the exam end. The
+  // runner sends this the moment results mount — without it the student sits
+  // in kiosk fullscreen staring at their score (reported 2026-08-12: "have to
+  // close the whole app after finishing a mock").
+  ipcMain.on('lockdown:exam-finished', () => releaseLockdown())
+
   return {
     get active() { return active },
     get focusLossCount() { return focusLossCount },

@@ -112,6 +112,29 @@ async function createWindow(): Promise<BrowserWindow> {
   win.webContents.on('did-navigate', (_e, url) => lockdown.handleNavigation(url))
   win.webContents.on('did-navigate-in-page', (_e, url) => lockdown.handleNavigation(url))
 
+  // Telegram sign-in return path when the bridge runs INSIDE this window:
+  // startTelegramLogin navigates the window to <site>/tg-login.html, and the
+  // bridge then bounces to mockstream://tg-auth#tgAuthResult=… via
+  // location.replace / the "tap here" link. Chromium does NOT hand in-page
+  // navigations to custom schemes over to the OS — without this listener the
+  // navigation is silently swallowed and the user is stranded on the bridge
+  // spinner. Intercept our own scheme and complete the login directly (no OS
+  // round-trip, no second instance).
+  win.webContents.on('will-navigate', (e, url) => {
+    if (url.startsWith(`${PROTOCOL}://`)) {
+      e.preventDefault()
+      handleDeepLink(url)
+    }
+  })
+  // Same guard for target=_blank / window.open variants of the bounce.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith(`${PROTOCOL}://`)) {
+      handleDeepLink(url)
+      return { action: 'deny' }
+    }
+    return { action: 'allow' }
+  })
+
   // Native notifications: new-published-mock toasts (renderer-driven) + a gentle
   // practice reminder. Reuses the lockdown controller's exam-active state to
   // suppress reminders during a test. Clicking a notification focuses the window
