@@ -4,6 +4,23 @@ The installed Windows app updates itself in the background via
 [`electron-updater`](https://www.electron.build/auto-update). No more manual
 reinstalls after each change.
 
+## Two stores, and why (2026-09-12)
+
+Installers are served from **Cloudflare R2** (`audio.mock-stream.com/desktop/<centre>/`)
+because R2 charges nothing for egress and a desktop installer is 100–226 MB. The **update
+feeds stay on GCS** and must: every app already installed polls `latest.yml` at the address
+baked into its own build, and that address cannot be changed retroactively.
+
+So a release goes to **both** — `scripts/upload-release.mjs` uploads to GCS and, when the
+R2 credentials are present, to R2 as well. The download pages read `latest.yml` from the
+bucket they are served from, then HEAD the R2 copy and use it only if it is there, falling
+back to GCS otherwise.
+
+⚠️ **`publish.url` still points at GCS on purpose.** Switching it before a real release has
+written `latest.yml` to R2 would leave newly installed apps polling an address with no feed —
+the newest users worst off, and silently. Order: R2 credentials working → ship one release →
+confirm `latest.yml` is on R2 → only then switch `publish.url`.
+
 ## How it works
 - The packaged app reads an update **feed** from a public GCS bucket:
   `https://storage.googleapis.com/mockstream-desktop-releases`
