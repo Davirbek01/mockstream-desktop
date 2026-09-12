@@ -55,8 +55,8 @@ jobs:
           RELEASE_BUCKET: gs://bekzods-desktop-releases
           RELEASE_PREFIX: Bekzods-Setup
           R2_RELEASE_PREFIX: desktop/bekzods
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: node scripts/upload-release.mjs
       - name: Upload build artifacts (backup)
         if: always()

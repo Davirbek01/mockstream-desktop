@@ -81,42 +81,68 @@ console.log(`\n✓ Published ${files.length} file(s) to ${BUCKET}`)
 // build. So a release goes to BOTH — GCS for the installed base, R2 for the
 // download pages and for builds published with publish.url pointing at R2.
 //
+// Uses R2's **S3 API**, not `wrangler` and not the Cloudflare v4 API. An R2
+// token scoped to "Object Read & Write" grants exactly that — objects — and
+// both of those paths first ask something broader (list buckets / account
+// endpoints) and answer 403 "Authentication error" even though the token is
+// perfectly valid. That cost an afternoon and two needlessly rolled tokens on
+// 2026-09-12; the S3 endpoint is what R2 hands you those keys for.
+//
 // Skipped silently-but-loudly when the credentials are absent, so a release
 // never fails because of this. Required to actually upload:
-//   R2_RELEASE_PREFIX   e.g. desktop/mockstream   (no trailing slash)
-//   CLOUDFLARE_API_TOKEN  — Object Read & Write on the mockstream-audio bucket
-//   CLOUDFLARE_ACCOUNT_ID — the "Mock Stream" account, NOT the personal one
-const R2_PREFIX  = process.env.R2_RELEASE_PREFIX || ''
-const R2_BUCKET  = process.env.R2_BUCKET || 'mockstream-audio'
-const haveR2Auth = !!process.env.CLOUDFLARE_API_TOKEN && !!process.env.CLOUDFLARE_ACCOUNT_ID
+//   R2_RELEASE_PREFIX      e.g. desktop/mockstream   (no trailing slash)
+//   R2_ACCESS_KEY_ID       \  the "Access Key ID" / "Secret Access Key" pair
+//   R2_SECRET_ACCESS_KEY   /  shown when the R2 API token is created
+//   R2_ACCOUNT_ID          the "Mock Stream" account id (not secret)
+const R2_PREFIX   = process.env.R2_RELEASE_PREFIX || ''
+const R2_BUCKET   = process.env.R2_BUCKET || 'mockstream-audio'
+const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID || '5ba79ef3e377250a69af22b372251686'
+const haveR2Auth  = !!process.env.R2_ACCESS_KEY_ID && !!process.env.R2_SECRET_ACCESS_KEY
 
 if (!R2_PREFIX || !haveR2Auth) {
   console.warn(
     '\n⚠️  R2 upload skipped — ' +
-      (!R2_PREFIX ? 'R2_RELEASE_PREFIX not set' : 'CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set') +
+      (!R2_PREFIX ? 'R2_RELEASE_PREFIX not set' : 'R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY not set') +
       '.\n   GCS has the release, so installed apps still update. But the download pages\n' +
       '   and any build whose publish.url points at R2 will NOT see this version.',
   )
 } else {
+  const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3')
+  const s3 = new S3Client({
+    region: 'auto',
+    endpoint: `https://${R2_ACCOUNT}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+  const TYPES = {
+    '.exe': 'application/x-msdownload',
+    '.dmg': 'application/x-apple-diskimage',
+    '.zip': 'application/zip',
+    '.yml': 'text/yaml; charset=utf-8',
+    '.blockmap': 'application/octet-stream',
+  }
   let r2ok = 0
   for (const f of files) {
-    const src = join(dist, f)
     const key = `${R2_PREFIX.replace(/\/$/, '')}/${f}`
     // A version-stamped installer never changes; a feed must never be cached,
     // or an app checks for updates and is told about the previous release.
     const cache = FEEDS.includes(f) ? 'no-cache, max-age=0' : 'public, max-age=31536000, immutable'
+    const ext = f.slice(f.lastIndexOf('.'))
     console.log(`↑ r2:${key}`)
     try {
-      execFileSync(
-        'npx',
-        ['--yes', 'wrangler', 'r2', 'object', 'put', `"${R2_BUCKET}/${key}"`,
-         `--file="${src}"`, `--cache-control="${cache}"`, '--remote'],
-        { stdio: 'inherit', shell: true },
-      )
+      await s3.send(new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: key,
+        Body: readFileSync(join(dist, f)),
+        ContentType: TYPES[ext] || 'application/octet-stream',
+        CacheControl: cache,
+      }))
       r2ok++
-    } catch {
+    } catch (e) {
       // One failed object must not fail the release: GCS already has it.
-      console.warn(`⚠️  R2 upload failed for ${f} — GCS copy stands.`)
+      console.warn(`⚠️  R2 upload failed for ${f} — GCS copy stands. (${e.name}: ${e.message})`)
     }
   }
   console.log(`✓ Published ${r2ok}/${files.length} file(s) to r2://${R2_BUCKET}/${R2_PREFIX}`)
