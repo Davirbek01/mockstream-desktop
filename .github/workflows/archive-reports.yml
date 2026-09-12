@@ -1,10 +1,19 @@
 # Nightly copy of the Supabase `reports` bucket (student reports + speaking
-# audio) into gs://mockstream-report-archive (Coldline) BEFORE the
-# storage-cleanup function's retention window deletes them. Idempotent:
-# each run archives whatever the bucket has that GCS doesn't.
+# audio) into the permanent archive, BEFORE the storage-cleanup function's
+# retention window deletes them. Idempotent: each run archives whatever the
+# bucket has that the archive doesn't.
 #
-# Secrets: GCP_SA_KEY (same SA as releases, has objectAdmin on the archive
-# bucket), ARCHIVE_LIST_TOKEN (matches site_settings.archive_list_token).
+# Writes go to Cloudflare R2 since 2026-09-13 — on Coldline ~90% of this job's
+# cost was the writing itself (Class A operations + multi-region replication),
+# and on R2 that is free. See the header of tools/archive-reports/archive.py.
+#
+# gcloud is still needed: the pre-cut-over half of the archive stays on GCS and
+# has to be LISTED so the job doesn't re-copy 82 GB into R2.
+#
+# Secrets: GCP_SA_KEY (same SA as releases — now only needs read/list on the
+# archive bucket), ARCHIVE_LIST_TOKEN (matches site_settings.archive_list_token),
+# R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY (already present in this repo for the
+# desktop release upload).
 name: archive-reports
 
 on:
@@ -31,7 +40,12 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Archive new reports to GCS
+      - name: Install boto3 (R2 speaks the S3 API)
+        run: pip install --quiet boto3
+
+      - name: Archive new reports to R2
         env:
           ARCHIVE_LIST_TOKEN: ${{ secrets.ARCHIVE_LIST_TOKEN }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: python tools/archive-reports/archive.py
