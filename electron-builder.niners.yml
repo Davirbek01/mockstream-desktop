@@ -11,9 +11,13 @@ directories:
   output: dist
   buildResources: build
 artifactName: NinersAcademy-Setup-${version}.${ext}
+# Auto-update feed on R2 (free egress), moved with this centre's first R2
+# release — release:niners uploads here in the same run, so the feed exists
+# before any app built from this config is installed. GCS still receives every
+# release, for apps installed before the switch.
 publish:
   provider: generic
-  url: https://storage.googleapis.com/niners-desktop-releases
+  url: https://audio.mock-stream.com/desktop/niners
 # niners' OWN custom protocol (matches the mobile niners scheme) for the
 # Telegram bridge deep-link return — never collides with Mock Stream's
 # `mockstream://`.

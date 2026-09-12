@@ -27,11 +27,14 @@ feed — the newest users worst off, and silently.
 `version: 1.0.141`, and a range request on `MockStream-Setup-1.0.141.exe` returning 206 /
 105,282,646 bytes — the same size GCS serves).
 
-**The six clones still point at their GCS buckets**, because R2 has no feed for them yet
-(`desktop/<centre>/latest.yml` is 404 for all six). Each clone's `publish.url` moves as part
-of that clone's own release — `npm run release:<clone>` uploads to R2 in the same run, so the
-feed exists by the time any app built from it is installed. `electron-builder.preview.yml`
-stays on GCS for the same reason.
+**The six clones: switched 2026-09-12**, each in the same run as its own 1.0.141 release.
+That ordering is what makes it safe — `npm run release:<clone>` uploads to R2 during the
+build, so the feed exists before any app built from that config can be installed. Prefixes:
+`desktop/bekzods`, `desktop/multilevelrecord`, `desktop/niners`, `desktop/global-education`,
+`desktop/achievers`, `desktop/muzaffars` (they do **not** all match the centre id — check
+`R2_RELEASE_PREFIX` in `package.json`, not the centre name).
+
+`electron-builder.preview.yml` stays on GCS: no preview release has written an R2 feed.
 
 ⚠️ Don't trust "build OK". Verify the feed **and** range-request the installer it names: in
 August two clones published a `latest.yml` whose `version:` looked right but whose `url:`

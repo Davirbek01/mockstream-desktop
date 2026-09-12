@@ -11,9 +11,13 @@ directories:
   output: dist
   buildResources: build
 artifactName: Bekzods-Setup-${version}.${ext}
+# Auto-update feed on R2 (free egress), moved with this centre's first R2
+# release — release:bek uploads here in the same run, so the feed exists before
+# any app built from this config is installed. GCS still receives every release,
+# for apps installed before the switch.
 publish:
   provider: generic
-  url: https://storage.googleapis.com/bekzods-desktop-releases
+  url: https://audio.mock-stream.com/desktop/bekzods
 # bek's OWN custom protocol (matches the mobile bek scheme) for the Telegram
 # bridge deep-link return — never collides with Mock Stream's `mockstream://`.
 protocols:
