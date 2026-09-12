@@ -16,15 +16,40 @@ R2 credentials are present, to R2 as well. The download pages read `latest.yml` 
 bucket they are served from, then HEAD the R2 copy and use it only if it is there, falling
 back to GCS otherwise.
 
-⚠️ **`publish.url` still points at GCS on purpose.** Switching it before a real release has
-written `latest.yml` to R2 would leave newly installed apps polling an address with no feed —
-the newest users worst off, and silently. Order: R2 credentials working → ship one release →
-confirm `latest.yml` is on R2 → only then switch `publish.url`.
+### `publish.url` — moved one centre at a time
+
+The order that must hold: R2 credentials working → ship that centre's release → confirm its
+`latest.yml` **and the installer it names** are on R2 → only then switch that centre's
+`publish.url`. Switching first would leave newly installed apps polling an address with no
+feed — the newest users worst off, and silently.
+
+**Mock Stream: switched 2026-09-12** after 1.0.141 was verified live on R2 (feed 200,
+`version: 1.0.141`, and a range request on `MockStream-Setup-1.0.141.exe` returning 206 /
+105,282,646 bytes — the same size GCS serves).
+
+**The six clones still point at their GCS buckets**, because R2 has no feed for them yet
+(`desktop/<centre>/latest.yml` is 404 for all six). Each clone's `publish.url` moves as part
+of that clone's own release — `npm run release:<clone>` uploads to R2 in the same run, so the
+feed exists by the time any app built from it is installed. `electron-builder.preview.yml`
+stays on GCS for the same reason.
+
+⚠️ Don't trust "build OK". Verify the feed **and** range-request the installer it names: in
+August two clones published a `latest.yml` whose `version:` looked right but whose `url:`
+named another clone's installer — a 404 for every updating app. Only the range check catches
+that.
+
+⚠️ `setx` does not reach an already-open shell. `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`
+can be set at User scope and still be invisible to the terminal running the release, in which
+case `upload-release.mjs` skips R2 with a warning and exits 0 — a release that looks fine and
+never reached R2. Load them in the same command:
+`$env:R2_ACCESS_KEY_ID = [Environment]::GetEnvironmentVariable('R2_ACCESS_KEY_ID','User')`
 
 ## How it works
-- The packaged app reads an update **feed** from a public GCS bucket:
-  `https://storage.googleapis.com/mockstream-desktop-releases`
-  (configured as the `publish` block in `electron-builder.yml`).
+- The packaged app reads an update **feed** from the address baked into its own build
+  (the `publish` block in its `electron-builder*.yml`):
+  Mock Stream → `https://audio.mock-stream.com/desktop/mockstream` (R2, since 1.0.141);
+  the six clones → `https://storage.googleapis.com/<clone>-desktop-releases` (GCS, until each
+  clone's next release). Both stores receive every release either way.
 - It checks `latest.yml` there **on launch, every 6 hours, and whenever you click
   back into the app window** (focus, throttled to once a minute). If a newer
   version exists, it downloads the installer in the background and shows an

@@ -4,12 +4,23 @@ directories:
   output: dist
   buildResources: build
 # Auto-update feed (electron-updater). The packaged app reads latest.yml + the
-# installer from this public GCS bucket; `npm run release` builds and uploads
-# them (see AUTOUPDATE.md). A space-free artifact name keeps the download URL clean.
+# installer from here; `npm run release` builds and uploads them to BOTH stores
+# (see AUTOUPDATE.md). A space-free artifact name keeps the download URL clean.
+#
+# Moved to R2 on 2026-09-12, only AFTER 1.0.141 was verified live there: feed
+# 200 with version 1.0.141, and a range request on the installer it names
+# returning 206 (105,282,646 bytes). Switching this line before a release had
+# written the feed would have left newly installed apps polling an address with
+# nothing at it — the newest users worst off, and silently.
+#
+# GCS keeps receiving every release and must: every app installed before this
+# change polls the GCS address baked into its own build, and that cannot be
+# changed retroactively. R2 is here because its egress is free and an installer
+# is ~105 MB.
 artifactName: MockStream-Setup-${version}.${ext}
 publish:
   provider: generic
-  url: https://storage.googleapis.com/mockstream-desktop-releases
+  url: https://audio.mock-stream.com/desktop/mockstream
 # Register the mockstream:// custom protocol so the installed app handles the
 # Telegram bridge deep-link return (the same scheme the mobile app uses, which
 # tg-login.html already allow-lists). On Windows this writes the URL-scheme
