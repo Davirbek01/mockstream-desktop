@@ -1,0 +1,56 @@
+# One-off (re-runnable) backfill of the frozen GCS report archive into R2.
+#
+# Manual only — this is not a schedule. Run it, watch it, run it again if it
+# stops: the script lists both sides every time and copies only the difference,
+# so a second run costs nothing and finishes what the first one missed.
+#
+# It runs here rather than on a laptop because 82 GB should not cross a home
+# connection twice, and because both credentials already live in this repo.
+#
+# Trial first: dispatch with limit=200, check the objects landed, then run with
+# limit=0 for the whole set (~154k objects, expect a few hours).
+name: backfill-archive-to-r2
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Copy at most N objects (0 = everything)"
+        required: false
+        default: "200"
+      workers:
+        description: "Parallel copiers"
+        required: false
+        default: "16"
+
+concurrency:
+  group: backfill-archive-to-r2
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools/archive-reports
+
+      # gcloud is used only to LIST the GCS side; the objects themselves come
+      # over the bucket's public URL, so no download credentials are needed.
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install boto3 (R2 speaks the S3 API)
+        run: pip install --quiet boto3
+
+      - name: Backfill
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          BACKFILL_LIMIT: ${{ inputs.limit }}
+          BACKFILL_WORKERS: ${{ inputs.workers }}
+        run: python tools/archive-reports/backfill-to-r2.py
