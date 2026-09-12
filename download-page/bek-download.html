@@ -66,7 +66,7 @@
         Windows
       </div>
       <div class="meta">Windows 10 / 11 · 64-bit · ~103 MB</div>
-      <a class="btn" id="dl-win" href="https://storage.googleapis.com/bekzods-desktop-releases/Bekzods-Setup-1.0.68.exe">Download for Windows</a>
+      <a class="btn" id="dl-win" href="https://audio.mock-stream.com/desktop/bekzods/Bekzods-Setup-1.0.140.exe">Download for Windows</a>
       <p class="note">⚠️ On first run Windows may say <b>"Windows protected your PC — Unknown publisher."</b> This is normal for new apps — click <b>More info → Run anyway</b> to install. The app is safe.</p>
     </div>
 
@@ -78,7 +78,7 @@
         macOS
       </div>
       <div class="meta">macOS 11 Big Sur or later · Intel &amp; Apple Silicon</div>
-      <a class="btn soon" id="dl-mac" href="https://storage.googleapis.com/bekzods-desktop-releases/Bekzods-Setup-1.0.68.dmg">Checking availability…</a>
+      <a class="btn soon" id="dl-mac" href="https://audio.mock-stream.com/desktop/bekzods/Bekzods-Setup-1.0.140.dmg">Checking availability…</a>
       <p class="note" id="note-mac">Signed &amp; notarized by Apple — installs cleanly with no security warning.</p>
     </div>
   </div>
@@ -90,10 +90,23 @@
   </div>
 
   <footer>
-    © <span id="yr">2026</span> Bekzods Multilevel · <a href="https://storage.googleapis.com/bekzods-desktop-releases/Bekzods-Setup-1.0.68.exe">Windows</a> · <a id="foot-mac" href="#">macOS</a>
+    © <span id="yr">2026</span> Bekzods Multilevel · <a href="https://audio.mock-stream.com/desktop/bekzods/Bekzods-Setup-1.0.140.exe">Windows</a> · <a id="foot-mac" href="#">macOS</a>
   </footer>
 
 <script>
+  // Downloads are served from Cloudflare R2 (free egress); the update feeds stay
+  // on GCS because installed apps poll them at an address baked into the build.
+  // HEAD the R2 copy first and fall back to GCS, so a build published only to
+  // GCS still downloads instead of 404ing.
+  var MS_R2 = 'https://audio.mock-stream.com/desktop/bekzods/';
+  function msSetHref(el, file){
+    if(!el || !file) return;
+    var gcs = file.indexOf('http') === 0 ? file : (location.href.replace(/[^/]*$/, '') + file);
+    var name = file.split('/').pop();
+    el.href = gcs;
+    fetch(MS_R2 + name, { method:'HEAD' }).then(function(r){ if(r.ok) el.href = MS_R2 + name; }).catch(function(){});
+  }
+
   document.getElementById('yr').textContent = new Date().getFullYear();
   var ua = navigator.userAgent || '';
   var isMac = /Mac/i.test(ua) && !/iPhone|iPad/i.test(ua);
@@ -115,7 +128,7 @@
   fetch('latest.yml', { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
     var ver = (t.match(/version:\s*([^\s]+)/) || [])[1];
     var file = (t.match(/path:\s*([^\s]+)/) || [])[1];
-    if (file) { winBtn.href = file; if (footWin) footWin.href = file; }
+    if (file) { msSetHref(winBtn, file); msSetHref(footWin, file); }
     if (ver && verEl) { verEl.textContent = 'Version ' + ver; }
   }).catch(function () {});
 
@@ -128,8 +141,8 @@
     if (!dmg) throw 0;
     macBtn.classList.remove('soon');
     macBtn.textContent = 'Download for macOS';
-    macBtn.href = dmg;
-    if (footMac) footMac.href = dmg;
+    msSetHref(macBtn, dmg);
+    if (footMac) msSetHref(footMac, dmg);
   }).catch(function () {
     macBtn.classList.add('soon');
     macBtn.textContent = 'Available shortly';
