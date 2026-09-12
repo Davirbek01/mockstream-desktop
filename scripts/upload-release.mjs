@@ -73,4 +73,53 @@ for (const f of files) {
 }
 
 console.log(`\n✓ Published ${files.length} file(s) to ${BUCKET}`)
+
+// ── Cloudflare R2, in parallel with GCS ─────────────────────────────────────
+// Downloads moved to R2 on 2026-09-12 (free egress; GCS egress was ~a third of
+// the storage bill). GCS is NOT retired and must not be: every app installed
+// before the switch polls its update feed at the GCS address baked into that
+// build. So a release goes to BOTH — GCS for the installed base, R2 for the
+// download pages and for builds published with publish.url pointing at R2.
+//
+// Skipped silently-but-loudly when the credentials are absent, so a release
+// never fails because of this. Required to actually upload:
+//   R2_RELEASE_PREFIX   e.g. desktop/mockstream   (no trailing slash)
+//   CLOUDFLARE_API_TOKEN  — Object Read & Write on the mockstream-audio bucket
+//   CLOUDFLARE_ACCOUNT_ID — the "Mock Stream" account, NOT the personal one
+const R2_PREFIX  = process.env.R2_RELEASE_PREFIX || ''
+const R2_BUCKET  = process.env.R2_BUCKET || 'mockstream-audio'
+const haveR2Auth = !!process.env.CLOUDFLARE_API_TOKEN && !!process.env.CLOUDFLARE_ACCOUNT_ID
+
+if (!R2_PREFIX || !haveR2Auth) {
+  console.warn(
+    '\n⚠️  R2 upload skipped — ' +
+      (!R2_PREFIX ? 'R2_RELEASE_PREFIX not set' : 'CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set') +
+      '.\n   GCS has the release, so installed apps still update. But the download pages\n' +
+      '   and any build whose publish.url points at R2 will NOT see this version.',
+  )
+} else {
+  let r2ok = 0
+  for (const f of files) {
+    const src = join(dist, f)
+    const key = `${R2_PREFIX.replace(/\/$/, '')}/${f}`
+    // A version-stamped installer never changes; a feed must never be cached,
+    // or an app checks for updates and is told about the previous release.
+    const cache = FEEDS.includes(f) ? 'no-cache, max-age=0' : 'public, max-age=31536000, immutable'
+    console.log(`↑ r2:${key}`)
+    try {
+      execFileSync(
+        'npx',
+        ['--yes', 'wrangler', 'r2', 'object', 'put', `"${R2_BUCKET}/${key}"`,
+         `--file="${src}"`, `--cache-control="${cache}"`, '--remote'],
+        { stdio: 'inherit', shell: true },
+      )
+      r2ok++
+    } catch {
+      // One failed object must not fail the release: GCS already has it.
+      console.warn(`⚠️  R2 upload failed for ${f} — GCS copy stands.`)
+    }
+  }
+  console.log(`✓ Published ${r2ok}/${files.length} file(s) to r2://${R2_BUCKET}/${R2_PREFIX}`)
+}
+
 console.log('  Installed apps will pick up the new version on their next check (and install on quit).')
