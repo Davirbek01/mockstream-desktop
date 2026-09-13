@@ -34,6 +34,24 @@
 import os, json, subprocess, urllib.request, urllib.parse, urllib.error, shutil, sys, time, mimetypes
 from concurrent.futures import ThreadPoolExecutor
 
+# Project-local secrets, loaded before the first os.environ read below.
+# Two Cloudflare accounts once shared ONE set of Windows-global R2_* variables,
+# so configuring one project silently broke the other: on 2026-09-13 the global
+# R2_ACCOUNT_ID was left pointing at the other account while the keys still
+# belonged to Mock Stream, which builds a valid-looking S3 client aimed at the
+# wrong endpoint. This file WINS over the ambient environment on purpose — the
+# ambient copy is exactly the part that goes stale. The CI runner has no .env,
+# so the GitHub Secrets path in archive-reports.yml is untouched.
+_envf = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env")
+if os.path.exists(_envf):
+    with open(_envf, encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _v = _line.split("=", 1)
+            os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
+
 SB = "https://zknyukkbtbcqgvkgjktb.supabase.co"
 ANON = "sb_publishable_SRLvRtRHU52FliLxA6gYaQ_I-v5LCk2"
 TOKEN = os.environ["ARCHIVE_LIST_TOKEN"]

@@ -15,6 +15,24 @@ import { execFileSync } from 'node:child_process'
 import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+// Project-local secrets, loaded before anything reads process.env below.
+// Two Cloudflare accounts once shared ONE set of Windows-global R2_* variables,
+// so configuring one project silently broke the other: on 2026-09-13 the global
+// R2_ACCOUNT_ID was left pointing at the other account while the keys still
+// belonged to Mock Stream, which yields a valid-looking S3 client aimed at the
+// wrong endpoint — an upload that fails for a reason the error never names.
+// This file WINS over the ambient environment on purpose: the ambient copy is
+// exactly the part that goes stale. CI has no .env, so the GitHub Secrets in
+// the release workflows keep working untouched.
+const envFile = new URL('../.env', import.meta.url)
+if (existsSync(envFile)) {
+  for (const line of readFileSync(envFile, 'utf8').split(/\r?\n/)) {
+    if (/^\s*(#|$)/.test(line)) continue
+    const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line)
+    if (m) process.env[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2')
+  }
+}
+
 // Flavor-aware: a clone (e.g. bek) publishes to its OWN bucket + artifact prefix
 // so its auto-update feed never crosses Mock Stream's. Defaults = Mock Stream.
 //   RELEASE_BUCKET=gs://bekzods-desktop-releases RELEASE_PREFIX=Bekzods-Setup
