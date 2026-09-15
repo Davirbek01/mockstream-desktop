@@ -5,6 +5,7 @@ import { loadRunnerConfig } from './config'
 import { startRunnerServer } from './runner-server'
 import { extractTgAuthPayload, deepLinkArg } from './deeplink'
 import { attachLockdown } from './lockdown'
+import { attachOffsiteBack } from './offsiteBack'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
@@ -134,6 +135,10 @@ async function createWindow(): Promise<BrowserWindow> {
     }
     return { action: 'allow' }
   })
+
+  // Google / Telegram sign-in take the whole window off the runner, and there is
+  // no toolbar: draw a "← Orqaga" button (plus Esc / Alt+←) on those pages.
+  attachOffsiteBack(win, () => currentRunnerBaseUrl)
 
   // Native notifications: new-published-mock toasts (renderer-driven) + a gentle
   // practice reminder. Reuses the lockdown controller's exam-active state to
