@@ -85,4 +85,18 @@ contextBridge.exposeInMainWorld('desktop', {
   restartToUpdate() {
     ipcRenderer.send('update:restart')
   },
+  /** Subscribe to the startup update screen: `downloading` (with percent) while
+   *  a version found just after launch comes down, `installing` right before the
+   *  app restarts into it, `idle` when there is nothing to wait for. Returns an
+   *  unsubscribe fn. */
+  onUpdateProgress(cb: (p: { phase: 'downloading' | 'installing' | 'idle'; version?: string; percent?: number }) => void) {
+    const handler = (_e: unknown, p: { phase: 'downloading' | 'installing' | 'idle'; version?: string; percent?: number }) => cb(p)
+    ipcRenderer.on('update:progress', handler)
+    return () => ipcRenderer.removeListener('update:progress', handler)
+  },
+  /** "Later" on that screen: no automatic restart; the update still installs on
+   *  the next quit. */
+  updateLater() {
+    ipcRenderer.send('update:later')
+  },
 })
