@@ -49,10 +49,10 @@ export function attachAutoUpdater(
   // The renderer's "Restart to update" button asks main to apply the update now
   // — but never mid-exam. Registered even in dev so the IPC channel exists; it
   // only acts once an update has actually been downloaded.
-  // "Later" on the startup screen: stop the automatic restart, keep the
-  // download going. It lands on the next quit like any other update.
-  let optedOut = false
-  ipcMain.on('update:later', () => { optedOut = true })
+  // The startup screen has no "Later" any more: an update found while the app
+  // is starting is applied, full stop. The channel stays registered so an
+  // older renderer that still sends it does not throw into a dead channel.
+  ipcMain.on('update:later', () => {})
 
   ipcMain.on('update:restart', () => {
     if (isExamActive()) return // never interrupt an exam; applies on next quit
@@ -70,9 +70,21 @@ export function attachAutoUpdater(
   autoUpdater.autoInstallOnAppQuit = true
 
   const launchedAt = Date.now()
-  /** Starting up, nobody mid-exam, and the student has not said "Later". */
-  const mayInstallNow = () =>
-    !optedOut && !isExamActive() && Date.now() - launchedAt < STARTUP_WINDOW
+  /** Latched the moment we decide to apply an update at launch. The startup
+   *  window gates STARTING the download, never finishing it: the macOS build
+   *  is >200 MB, and on a slow line the download outlives five minutes. When
+   *  the window was re-checked per event, the progress bar froze at whatever
+   *  percent the clock ran out on and the screen then vanished — the student
+   *  gained nothing and still had to quit twice for the update to land. */
+  let installAtLaunch = false
+  /** Starting up and nobody mid-exam. */
+  const mayInstallNow = () => {
+    if (isExamActive()) return false
+    if (installAtLaunch) return true
+    if (Date.now() - launchedAt >= STARTUP_WINDOW) return false
+    installAtLaunch = true
+    return true
+  }
   const toRenderer = (channel: string, payload: unknown) => {
     try {
       getWindow()?.webContents.send(channel, payload)
@@ -122,9 +134,14 @@ export function attachAutoUpdater(
     }
   })
 
-  // Never let an update error surface to the user or block the app.
+  // Never let an update error surface to the user or block the app. The
+  // renderer MUST be told: the overlay covers the whole app while it thinks a
+  // download is running, so a connection that drops mid-download used to leave
+  // a frozen percentage over an app the student could no longer use.
   autoUpdater.on('error', (err) => {
     console.warn('[updater] check failed:', err?.message ?? err)
+    installAtLaunch = false
+    toRenderer('update:progress', { phase: 'idle' })
   })
 
   const check = () => {
