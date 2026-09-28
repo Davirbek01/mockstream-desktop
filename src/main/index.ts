@@ -357,6 +357,16 @@ if (!gotTheLock) {
     isQuitting = true
   })
 
+  // macOS applies an update through Electron's native autoUpdater, which emits
+  // 'before-quit-for-update' and NOT 'before-quit'. Without this line isQuitting
+  // stayed false, the window's close handler hid the window instead of letting
+  // it go, and the quit was cancelled: the app carried on running and the
+  // download sat staged until the student quit by hand. Windows never showed it
+  // — the NSIS path quits through app.quit(), which does emit 'before-quit'.
+  app.on('before-quit-for-update', () => {
+    isQuitting = true
+  })
+
   app.on('window-all-closed', () => {
     // The window normally only hides (close-to-tray), so this fires only on a real
     // quit — honour it everywhere except macOS, where tray apps stay resident.

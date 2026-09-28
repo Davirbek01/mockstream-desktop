@@ -89,8 +89,8 @@ contextBridge.exposeInMainWorld('desktop', {
    *  a version found just after launch comes down, `installing` right before the
    *  app restarts into it, `idle` when there is nothing to wait for. Returns an
    *  unsubscribe fn. */
-  onUpdateProgress(cb: (p: { phase: 'downloading' | 'installing' | 'idle'; version?: string; percent?: number }) => void) {
-    const handler = (_e: unknown, p: { phase: 'downloading' | 'installing' | 'idle'; version?: string; percent?: number }) => cb(p)
+  onUpdateProgress(cb: (p: { phase: 'downloading' | 'installing' | 'restarting' | 'idle'; version?: string; percent?: number; seconds?: number }) => void) {
+    const handler = (_e: unknown, p: { phase: 'downloading' | 'installing' | 'restarting' | 'idle'; version?: string; percent?: number; seconds?: number }) => cb(p)
     ipcRenderer.on('update:progress', handler)
     return () => ipcRenderer.removeListener('update:progress', handler)
   },

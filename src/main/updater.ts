@@ -49,10 +49,11 @@ export function attachAutoUpdater(
   // The renderer's "Restart to update" button asks main to apply the update now
   // — but never mid-exam. Registered even in dev so the IPC channel exists; it
   // only acts once an update has actually been downloaded.
-  // The startup screen has no "Later" any more: an update found while the app
-  // is starting is applied, full stop. The channel stays registered so an
-  // older renderer that still sends it does not throw into a dead channel.
-  ipcMain.on('update:later', () => {})
+  // "Later" is wired below, once armRestart exists. A startup update has no
+  // "Later" at all — it is applied, full stop; this only ever postpones the
+  // mid-session countdown.
+  let snooze: () => void = () => {}
+  ipcMain.on('update:later', () => snooze())
 
   ipcMain.on('update:restart', () => {
     if (isExamActive()) return // never interrupt an exam; applies on next quit
@@ -105,6 +106,60 @@ export function attachAutoUpdater(
     toRenderer('update:progress', { phase: 'downloading', percent: Math.max(0, Math.min(100, Math.round(p?.percent ?? 0))) })
   })
 
+  /** Seconds of warning before a mid-session restart. Long enough to finish a
+   *  sentence and put a pen down, short enough that nobody wanders off. */
+  const RESTART_COUNTDOWN = 60
+  /** How long "Later" buys. It postpones, it does not cancel: the whole point
+   *  of the mid-session countdown is that a machine left open for weeks still
+   *  ends up on the new build. */
+  const SNOOZE = 30 * 60 * 1000
+  let countdownTimer: NodeJS.Timeout | null = null
+  let snoozeTimer: NodeJS.Timeout | null = null
+  /** Warn, count down, restart. An exam that starts mid-countdown cancels it;
+   *  we go back to waiting and try again once the exam is over. */
+  const armRestart = (version: string) => {
+    if (countdownTimer || snoozeTimer) return
+    snooze = () => {
+      if (countdownTimer) clearInterval(countdownTimer)
+      countdownTimer = null
+      toRenderer('update:progress', { phase: 'idle' })
+      if (snoozeTimer) clearTimeout(snoozeTimer)
+      snoozeTimer = setTimeout(() => {
+        snoozeTimer = null
+        armRestart(version)
+      }, SNOOZE)
+    }
+    let left = RESTART_COUNTDOWN
+    countdownTimer = setInterval(() => {
+      if (isExamActive()) {
+        // Put it away and re-arm later — a restart must never land on an exam.
+        left = RESTART_COUNTDOWN
+        toRenderer('update:progress', { phase: 'idle' })
+        return
+      }
+      if (left > 0) {
+        toRenderer('update:progress', { phase: 'restarting', version, seconds: left })
+        left -= 1
+        return
+      }
+      if (countdownTimer) clearInterval(countdownTimer)
+      countdownTimer = null
+      toRenderer('update:progress', { phase: 'installing', version })
+      setTimeout(() => {
+        try {
+          autoUpdater.quitAndInstall()
+        } catch (err) {
+          console.warn('[updater] quitAndInstall failed:', (err as Error)?.message ?? err)
+          // Fall back to the old path so the student still has a way through.
+          toRenderer('update:progress', { phase: 'idle' })
+          try {
+            getWindow()?.webContents.send('update:downloaded', { version })
+          } catch { /* renderer gone — ignore */ }
+        }
+      }, PAINT_MS)
+    }, 1000)
+  }
+
   autoUpdater.on('update-downloaded', (info) => {
     // Found while starting up: apply it now, like a phone does.
     if (mayInstallNow()) {
@@ -119,19 +174,17 @@ export function attachAutoUpdater(
       }, PAINT_MS)
       return
     }
-    // Otherwise stay out of the way: it installs on the next quit.
-    toRenderer('update:progress', { phase: 'idle' })
+    // Found mid-session. Waiting for a quit is not good enough: the window
+    // hides to tray rather than quitting, so a machine left open at a centre
+    // can sit on an old build for weeks with the download already staged.
+    // Warn, count down, and restart — but never while an exam is running.
     if (Notification.isSupported()) {
       new Notification({
         title: 'Update ready',
-        body: `${__BRAND_NAME__} ${info.version} will install automatically next time you close the app.`,
+        body: `${__BRAND_NAME__} ${info.version} is about to install.`,
       }).show()
     }
-    try {
-      getWindow()?.webContents.send('update:downloaded', { version: info.version })
-    } catch {
-      /* renderer gone — ignore */
-    }
+    armRestart(info?.version ?? '')
   })
 
   // Never let an update error surface to the user or block the app. The
