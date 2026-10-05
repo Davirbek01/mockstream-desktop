@@ -19,6 +19,7 @@ const BRANDS: Record<string, { name: string; protocol: string; appId: string }> 
   global: { name: 'Global Education LC', protocol: 'mockstreamglobal', appId: 'app.mockstream.global.desktop' },
   achievers: { name: 'Achievers Academy', protocol: 'mockstreamachievers', appId: 'app.mockstream.achievers.desktop' },
   muzaffars: { name: "Muzaffar's English", protocol: 'mockstreammuzaffars', appId: 'app.mockstream.muzaffars.desktop' },
+  max: { name: 'Multilevel Max', protocol: 'mockstreammax', appId: 'app.mockstream.max.desktop' },
 }
 const brand = BRANDS[FLAVOR] || BRANDS.mock_stream
 const brandDefine = {

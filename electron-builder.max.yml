@@ -1,0 +1,52 @@
+# Multilevel Max — white-label desktop build config.
+# ----------------------------------------------------------------------------
+# Used via `electron-builder --config electron-builder.max.yml` AFTER the
+# runner is built with VITE_CENTER_ID=max and the main bundle with FLAVOR=max
+# (see the dist:max npm script). Mirrors electron-builder.yml but with
+# Multilevel Max identity, its own icon, deep-link scheme, and its OWN release
+# feed so max and Mock Stream auto-updates never cross.
+appId: app.mockstream.max.desktop
+productName: Multilevel Max
+directories:
+  output: dist
+  buildResources: build
+artifactName: MultilevelMax-Setup-${version}.${ext}
+# Auto-update feed on R2 (free egress). This centre is new — it has no installed
+# base on GCS — but release:max still mirrors to GCS so the Mac CI publish step
+# and the download pages behave exactly like every other clone.
+publish:
+  provider: generic
+  url: https://audio.mock-stream.com/desktop/multilevelmax
+# max' OWN custom protocol (matches the mobile max scheme) for the Telegram
+# bridge deep-link return — never collides with Mock Stream's `mockstream://`.
+protocols:
+  - name: Multilevel Max Protocol
+    schemes:
+      - mockstreammax
+files:
+  - out/**/*
+# Bundle the max-flavored runner build (built with VITE_CENTER_ID=max).
+extraResources:
+  - from: ../mockstream-runner/dist
+    to: runner
+    filter:
+      - '**/*'
+win:
+  target: nsis
+  icon: build/max/icon.png
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.education
+  icon: build/max/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Mic prompt for the Speaking exam (else macOS silently denies the mic).
+  extendInfo:
+    NSMicrophoneUsageDescription: Multilevel Max needs the microphone to record your spoken answers during Speaking mock exams.
+  notarize: true

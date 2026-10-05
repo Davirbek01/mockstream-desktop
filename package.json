@@ -37,7 +37,10 @@
     "release:achievers": "npm run dist:achievers && cross-env RELEASE_BUCKET=gs://achievers-desktop-releases R2_RELEASE_PREFIX=desktop/achievers RELEASE_PREFIX=AchieversAcademy-Setup node scripts/upload-release.mjs",
     "runner:muzaffars": "cross-env VITE_CENTER_ID=muzaffars npm --prefix ../mockstream-runner run build",
     "dist:muzaffars": "npm run runner:muzaffars && cross-env FLAVOR=muzaffars electron-vite build && electron-builder --config electron-builder.muzaffars.yml",
-    "release:muzaffars": "npm run dist:muzaffars && cross-env RELEASE_BUCKET=gs://muzaffars-desktop-releases R2_RELEASE_PREFIX=desktop/muzaffars RELEASE_PREFIX=MuzaffarsEnglish-Setup node scripts/upload-release.mjs"
+    "release:muzaffars": "npm run dist:muzaffars && cross-env RELEASE_BUCKET=gs://muzaffars-desktop-releases R2_RELEASE_PREFIX=desktop/muzaffars RELEASE_PREFIX=MuzaffarsEnglish-Setup node scripts/upload-release.mjs",
+    "runner:max": "cross-env VITE_CENTER_ID=max npm --prefix ../mockstream-runner run build",
+    "dist:max": "npm run runner:max && cross-env FLAVOR=max electron-vite build && electron-builder --config electron-builder.max.yml",
+    "release:max": "npm run dist:max && cross-env RELEASE_BUCKET=gs://multilevelmax-desktop-releases R2_RELEASE_PREFIX=desktop/multilevelmax RELEASE_PREFIX=MultilevelMax-Setup node scripts/upload-release.mjs"
   },
   "keywords": [],
   "author": "",

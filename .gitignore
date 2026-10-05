@@ -36,3 +36,5 @@ grab-*.cjs
 !build/achievers/icon.png
 !build/muzaffars/
 !build/muzaffars/icon.png
+!build/max/
+!build/max/icon.png
