@@ -38,3 +38,6 @@ grab-*.cjs
 !build/muzaffars/icon.png
 !build/max/
 !build/max/icon.png
+
+# App Store Connect .p8 written by the macOS release workflows — never commit one.
+private_keys/

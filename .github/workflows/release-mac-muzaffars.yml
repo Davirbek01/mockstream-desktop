@@ -36,11 +36,18 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.MAC_CSC_LINK }}
           p12-password: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+      - name: Write the App Store Connect API key for notarization
+        working-directory: mockstream-desktop
+        run: |
+          mkdir -p private_keys
+          printf '%s' "${{ secrets.ASC_API_KEY_P8 }}" > private_keys/AuthKey.p8
+          chmod 600 private_keys/AuthKey.p8
       - name: Build, sign & notarize muzaffars (universal dmg + zip)
         working-directory: mockstream-desktop
         env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_API_KEY: private_keys/AuthKey.p8
+          APPLE_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.ASC_API_ISSUER }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npm run dist:muzaffars
       - name: Authenticate to Google Cloud
