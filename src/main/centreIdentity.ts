@@ -26,6 +26,7 @@
 // ============================================================================
 import { app, nativeImage, shell, type BrowserWindow, type IpcMain } from 'electron'
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { EOL } from 'node:os'
 import { join } from 'node:path'
 
 /** The eight centres, shell-side. Mirrors the runner's config/brand.ts. */
@@ -88,6 +89,13 @@ function readState(): Stored {
 function writeState(s: Stored): void {
   try {
     writeFileSync(statePath(), JSON.stringify(s), 'utf8')
+    // The uninstaller has to remove these too, and NSIS can neither read JSON
+    // nor know about shortcuts it never created — so it is handed one full
+    // path per line (build/installer.nsh reads this file).
+    const list = join(app.getPath('userData'), 'centre-shortcuts.txt')
+    const paths = [s.shortcut, s.startMenu].filter(Boolean) as string[]
+    if (paths.length) writeFileSync(list, paths.join(EOL) + EOL, 'utf8')
+    else rmSync(list, { force: true })
   } catch {
     /* a read-only profile just loses the ability to clean up the old shortcut */
   }

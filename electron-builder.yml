@@ -42,6 +42,13 @@ extraResources:
     to: runner
     filter:
       - '**/*'
+# A clone app and this one share an installation directory (electron-builder
+# derives it from package.json `name`), so the shared build takes the clone's
+# place rather than landing beside it. The same script removes the per-centre
+# shortcuts the app writes at runtime. See build/installer.nsh.
+nsis:
+  include: build/installer.nsh
+
 win:
   target: nsis
   # CODE SIGNING (ready, needs your certificate — see SIGNING.md):

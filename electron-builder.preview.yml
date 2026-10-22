@@ -12,6 +12,12 @@
 # runner shows a PREVIEW badge in that build.
 appId: app.mockstream.desktop.preview
 productName: Mock Stream Preview
+# Its OWN installation directory and user-data folder. Without this the preview
+# installs over the production app (same package name -> same directory) and
+# either uninstaller removes both; a test build also inherited the production
+# app's localStorage, so a test centre pick leaked into the real app.
+extraMetadata:
+  name: mockstream-desktop-preview
 directories:
   output: dist
   buildResources: build
