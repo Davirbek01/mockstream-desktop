@@ -10,6 +10,7 @@ import { attachNotifications, type NotificationsController } from './notificatio
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
 import {
+  applyBootIdentity,
   attachCentreIdentity,
   centreIconImage,
   currentBrandName,
@@ -18,7 +19,6 @@ import {
 import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL, RECORD_TRAY_ICON_DATA_URL, NINERS_TRAY_ICON_DATA_URL, GLOBAL_TRAY_ICON_DATA_URL, ACHIEVERS_TRAY_ICON_DATA_URL, MUZAFFARS_TRAY_ICON_DATA_URL, MAX_TRAY_ICON_DATA_URL } from './tray-icon'
 
 const PROTOCOL = __BRAND_PROTOCOL__
-const APP_ID = __BRAND_APP_ID__
 const BRAND_NAME = __BRAND_NAME__
 
 // Launched at OS login (Windows/macOS register the app with `--hidden`): start in
@@ -57,6 +57,10 @@ function runnerRouteUrl(route: string | undefined): string | null {
   }
 }
 
+/** The stored centre's icon, read once before the first window opens (see the
+ *  AppUserModelID note in centreIdentity). */
+let bootIcon: Electron.NativeImage | null = null
+
 async function createWindow(): Promise<BrowserWindow> {
   const win = new BrowserWindow({
     width: 1280,
@@ -66,7 +70,8 @@ async function createWindow(): Promise<BrowserWindow> {
     // (Exam lockdown still engages kiosk fullscreen, which hides the frame while
     // a test is active — see attachLockdown below.)
     frame: true,
-    title: BRAND_NAME,
+    title: currentBrandName() || BRAND_NAME,
+    ...(bootIcon ? { icon: bootIcon } : {}),
     // Start hidden when launched at login; otherwise reveal after we maximize so
     // the window never flashes at the default size first.
     show: false,
@@ -355,10 +360,12 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(async () => {
-    // Windows shows the AppUserModelId's app name/icon on notification toasts;
-    // it must match electron-builder's appId so installed builds resolve the
-    // Start-menu shortcut (and thus the app name/icon) for the toast.
-    app.setAppUserModelId(APP_ID)
+    // Windows shows the AppUserModelId's app name/icon on notification toasts
+    // AND on the taskbar button; it resolves both from the Start-menu shortcut
+    // registered for that id. With no centre picked that is electron-builder's
+    // appId and the installer's own shortcut; with one, it is that centre's id
+    // and the shortcut the app wrote for it.
+    bootIcon = applyBootIdentity()
     // Grant the microphone to the bundled runner so the Speaking exam can record
     // (Electron denies media by default). The runner is our own bundled origin.
     session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {

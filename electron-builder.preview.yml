@@ -31,6 +31,10 @@ files:
   - out/**/*
 # Bundle the runner's static SPA build (built with VITE_PREVIEW=1).
 extraResources:
+  # Every centre's icon — the preview build is a shared build too, so it has to
+  # be able to wear whichever centre the tester picks (main/centreIdentity.ts).
+  - from: build/centre-icons
+    to: centre-icons
   - from: ../mockstream-runner/dist
     to: runner
     filter:
