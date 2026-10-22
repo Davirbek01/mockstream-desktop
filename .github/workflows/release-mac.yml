@@ -28,6 +28,10 @@ on:
       notes:
         description: Release notes / reason (optional)
         required: false
+      publish:
+        description: Publish to the live update feed (uncheck for a test build only)
+        type: boolean
+        default: true
 
 jobs:
   build-mac:
@@ -79,15 +83,22 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npm run dist -- --mac
 
+      # A test build stops here: the dmg + zip still come out signed and
+      # notarized, as the artifact below, but no installed app is told about
+      # them. Publishing is how a version reaches students, so it is a
+      # deliberate choice, not a side effect of running this workflow.
       - name: Authenticate to Google Cloud
+        if: ${{ inputs.publish }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up gcloud
+        if: ${{ inputs.publish }}
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Publish to GCS + R2 release buckets
+        if: ${{ inputs.publish }}
         working-directory: mockstream-desktop
         env:
           R2_RELEASE_PREFIX: desktop/mockstream

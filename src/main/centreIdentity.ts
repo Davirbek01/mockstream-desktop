@@ -130,7 +130,18 @@ export function applyBootIdentity(): Electron.NativeImage | null {
   app.setAppUserModelId(bootAumid)
   if (!name) return null
   currentName = name
-  return centreIconImage(centreId)
+  const img = centreIconImage(centreId)
+  // macOS ignores BrowserWindow's `icon`; the Dock is where a running app's
+  // icon lives, and it must be set on the way up or the app wears the shared
+  // brand until the renderer gets around to announcing.
+  if (img) {
+    try {
+      app.dock?.setIcon(img)
+    } catch {
+      /* ignore */
+    }
+  }
+  return img
 }
 
 /** Put this centre's shortcuts on the desktop and in the Start menu, and take
@@ -140,7 +151,6 @@ export function applyBootIdentity(): Electron.NativeImage | null {
  *  The Start-menu one is not decoration — it is what Windows reads for the
  *  taskbar button icon and for toast notifications. */
 function syncShortcuts(centreId: string, name: string): void {
-  if (process.platform !== 'win32' || !app.isPackaged) return
   const state = readState()
   const ico = join(iconDir(), `${centreId}.ico`)
   const own = centreId !== 'mock_stream'
@@ -215,7 +225,14 @@ export function applyCentre(win: BrowserWindow | null, centreId: string, picked:
     }
   }
 
-  if (picked) syncShortcuts(centreId, name)
+  if (picked) {
+    // Remember the centre on every platform — applyBootIdentity reads it before
+    // the first window opens. The shortcuts themselves are Windows-only: macOS
+    // has no equivalent (the .app bundle's icon and name are fixed), so there
+    // the Dock icon and the window title are the whole of it.
+    if (process.platform === 'win32' && app.isPackaged) syncShortcuts(centreId, name)
+    else writeState({ ...readState(), centre: centreId })
+  }
 
   for (const cb of listeners) {
     try {
