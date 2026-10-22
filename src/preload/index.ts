@@ -41,6 +41,13 @@ contextBridge.exposeInMainWorld('desktop', {
   getFocusLossCount: () => focusLossCount,
   // Results mounted → main releases the kiosk (see lockdown.ts).
   examFinished: () => ipcRenderer.send('lockdown:exam-finished'),
+
+  /** One build, every centre. `centreApplied` runs on each launch (window +
+   *  taskbar + Dock icon, title, tray); `centrePicked` runs the first launch
+   *  after the student chose, and additionally writes the desktop shortcut
+   *  that carries that centre's name and icon. */
+  centreApplied: (centreId: string) => ipcRenderer.send('centre:applied', centreId),
+  centrePicked: (centreId: string) => ipcRenderer.send('centre:picked', centreId),
   /** Subscribe to lockdown active/count changes. Returns an unsubscribe fn. */
   onLockdownState(cb: (state: { active: boolean; focusLossCount: number }) => void) {
     const handler = (_e: unknown, state: { active: boolean; focusLossCount: number }) => {

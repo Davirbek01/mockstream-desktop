@@ -9,6 +9,12 @@ import { attachOffsiteBack } from './offsiteBack'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
 import { getMachineId } from './machineId'
+import {
+  attachCentreIdentity,
+  centreIconImage,
+  currentBrandName,
+  onCentreChange,
+} from './centreIdentity'
 import { TRAY_ICON_DATA_URL, BEK_TRAY_ICON_DATA_URL, RECORD_TRAY_ICON_DATA_URL, NINERS_TRAY_ICON_DATA_URL, GLOBAL_TRAY_ICON_DATA_URL, ACHIEVERS_TRAY_ICON_DATA_URL, MUZAFFARS_TRAY_ICON_DATA_URL, MAX_TRAY_ICON_DATA_URL } from './tray-icon'
 
 const PROTOCOL = __BRAND_PROTOCOL__
@@ -103,8 +109,13 @@ async function createWindow(): Promise<BrowserWindow> {
   // <title> ("mockstream-runner") leak into the window chrome.
   win.on('page-title-updated', (e) => {
     e.preventDefault()
-    win.setTitle(BRAND_NAME)
+    win.setTitle(currentBrandName() || BRAND_NAME)
   })
+
+  // One build serves every centre: the runner tells us which one the student
+  // picked, and the window/taskbar icon, title, Dock icon and desktop shortcut
+  // follow it. A clone build never sends these — it is pinned to its centre.
+  attachCentreIdentity(win, ipcMain)
 
   // Secure exam lockdown: kiosk fullscreen + focus-loss flag + escape-route
   // blocking, engaged only while a real exam route is active (detect-and-flag).
@@ -232,6 +243,25 @@ function showMainWindow(): void {
 
 /** System-tray icon so the app keeps running (and receiving notifications) after
  *  the window is closed. Left-click opens the window; the menu offers Open/Quit. */
+/** Tooltip + menu for whichever brand the app is currently wearing. */
+function applyTrayBrand(name: string): void {
+  if (!tray || tray.isDestroyed()) return
+  tray.setToolTip(name)
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: `Open ${name}`, click: () => showMainWindow() },
+      { type: 'separator' },
+      {
+        label: 'Quit',
+        click: () => {
+          isQuitting = true
+          app.quit()
+        },
+      },
+    ]),
+  )
+}
+
 function createTray(): void {
   if (tray) return
   const TRAY_BY_PROTOCOL: Record<string, string> = {
@@ -247,22 +277,19 @@ function createTray(): void {
     TRAY_BY_PROTOCOL[__BRAND_PROTOCOL__] || TRAY_ICON_DATA_URL
   )
   tray = new Tray(icon)
-  tray.setToolTip(BRAND_NAME)
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: `Open ${BRAND_NAME}`, click: () => showMainWindow() },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          isQuitting = true
-          app.quit()
-        },
-      },
-    ]),
-  )
+  applyTrayBrand(currentBrandName() || BRAND_NAME)
   tray.on('click', () => showMainWindow())
   tray.on('double-click', () => showMainWindow())
+
+  // A student who picked Niners should find Niners in the tray as well, not the
+  // shared build's name. Fires on every launch once a centre is stored.
+  onCentreChange((centreId, name) => {
+    applyTrayBrand(name)
+    const img = centreIconImage(centreId)
+    if (img && tray && !tray.isDestroyed()) {
+      tray.setImage(img.resize({ width: 16, height: 16 }))
+    }
+  })
 }
 
 ipcMain.handle('app:version', () => app.getVersion())
