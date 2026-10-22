@@ -38,10 +38,30 @@
 !macro msRemoveClone NAME
   IfFileExists "${MS_SHARED_DIR}\Uninstall ${NAME}.exe" 0 +3
   DetailPrint "Removing ${NAME} — one app now serves every centre..."
-  ExecWait "$\"${MS_SHARED_DIR}\Uninstall ${NAME}.exe$\" /currentuser /S"
+  ; --updated tells that uninstaller to leave user data alone. Every flavour
+  ; shares one user-data folder (one package name), so without it a clone that
+  ; deletes app data on uninstall would sign the student out of the very app
+  ; they are moving to.
+  ExecWait "$\"${MS_SHARED_DIR}\Uninstall ${NAME}.exe$\" /currentuser /S --updated"
 !macroend
 
 !macro customInit
+  ; This runs on EVERY install of this app, update included, and that is on
+  ; purpose — measured 2026-10-22, not assumed:
+  ;
+  ;   • A clone beside us does not survive either way. Before laying down its
+  ;     files, the installer runs OUR OWN previous uninstaller, and that
+  ;     uninstaller deletes the whole shared directory — the clone's exe and
+  ;     its uninstaller with it.
+  ;   • Without this macro that leaves corpses: the clone's Add/Remove-Programs
+  ;     entry and its desktop and Start-menu shortcuts stay behind, pointing at
+  ;     an executable that is gone.
+  ;
+  ; So the choice is not "remove the clone or leave it alone" — it is "remove it
+  ; cleanly or leave wreckage". Hence no attempt to skip this on an update: two
+  ; ways of detecting one were tried (electron-builder's ${isUpdated} and
+  ; parsing --updated with ${GetOptions}) and neither held, and chasing a third
+  ; would only have protected an install that dies regardless.
   !insertmacro msRemoveClone "Bekzods Multilevel"
   !insertmacro msRemoveClone "Cambridge Innovation School"
   !insertmacro msRemoveClone "Niners Academy"
