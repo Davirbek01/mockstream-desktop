@@ -46,6 +46,20 @@ contextBridge.exposeInMainWorld('desktop', {
    *  taskbar + Dock icon, title, tray); `centrePicked` runs the first launch
    *  after the student chose, and additionally writes the desktop shortcut
    *  that carries that centre's name and icon. */
+  /** Clone apps only: download the shared app and install it over this one.
+   *  Progress arrives on `migrate:progress`; the app quits when it installs. */
+  startMigration: () => ipcRenderer.send('migrate:start'),
+  onMigrationProgress(
+    cb: (p: { phase: 'checking' | 'downloading' | 'installing' | 'error'; percent?: number; message?: string }) => void,
+  ) {
+    const handler = (
+      _e: unknown,
+      p: { phase: 'checking' | 'downloading' | 'installing' | 'error'; percent?: number; message?: string },
+    ) => cb(p)
+    ipcRenderer.on('migrate:progress', handler)
+    return () => ipcRenderer.removeListener('migrate:progress', handler)
+  },
+
   centreApplied: (centreId: string) => ipcRenderer.send('centre:applied', centreId),
   centrePicked: (centreId: string) => ipcRenderer.send('centre:picked', centreId),
   /** Subscribe to lockdown active/count changes. Returns an unsubscribe fn. */

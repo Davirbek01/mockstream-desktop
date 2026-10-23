@@ -8,6 +8,7 @@ import { attachLockdown } from './lockdown'
 import { attachOffsiteBack } from './offsiteBack'
 import { attachNotifications, type NotificationsController } from './notifications'
 import { attachAutoUpdater } from './updater'
+import { attachMigration } from './migrate'
 import { getMachineId } from './machineId'
 import {
   applyBootIdentity,
@@ -384,6 +385,9 @@ if (!gotTheLock) {
     // Background auto-update (packaged Windows only; installs on next quit, or
     // immediately when the user clicks "Restart to update" outside an exam).
     attachAutoUpdater(() => mainWindow, () => !!lockdownController?.active)
+    // A clone app's one-way trip onto the shared app (clone builds only ever
+    // show the button; the channel is harmless everywhere else).
+    attachMigration(() => mainWindow, () => !!lockdownController?.active)
   })
 
   // A real quit was requested (tray Quit, or the auto-updater relaunch) — let the
