@@ -38,6 +38,12 @@ grab-*.cjs
 !build/muzaffars/icon.png
 !build/max/
 !build/max/icon.png
+# The per-centre icons the app wears at runtime. The .ico half slipped through
+# (it is not a .png) while the .png half was swallowed by the rule above — so
+# CI, which builds from this repo, shipped a macOS app whose Dock icon could
+# never change, and any clean checkout would have done the same on Windows.
+!build/centre-icons/
+!build/centre-icons/*.png
 
 # App Store Connect .p8 written by the macOS release workflows — never commit one.
 private_keys/
