@@ -56,8 +56,27 @@ if (!existsSync(join(dist, 'latest.yml')) && !existsSync(join(dist, 'latest-mac.
 // Platform-agnostic: a Windows build leaves latest.yml + .exe (+ .blockmap); a
 // macOS build (CI runner) leaves latest-mac.yml + .dmg + .zip (+ blockmaps). We
 // upload whichever of these exist, so the same script serves both pipelines.
-const { version } = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'))
 const FEEDS = ['latest.yml', 'latest-mac.yml']
+
+// The version comes from the feed electron-builder just wrote, NOT from
+// package.json. A clone config pins its own version through extraMetadata (it
+// has to stay below the shared app's, or the migration's electron-updater call
+// refuses to fetch), and package.json then names a version this build never
+// had: the installer would be missed and only the feed uploaded, leaving a feed
+// that points at a file nobody published. The feed is the build's own statement
+// of what it is. package.json stays as the fallback for anything that somehow
+// produced no feed.
+function builtVersion() {
+  for (const f of FEEDS) {
+    const p = join(dist, f)
+    if (!existsSync(p)) continue
+    const m = /^version:\s*(.+)$/m.exec(readFileSync(p, 'utf8'))
+    if (m) return m[1].trim().replace(/^(['"])(.*)\1$/, '$2')
+  }
+  return JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')).version
+}
+const version = builtVersion()
+console.log(`• publishing v${version} from dist/ to ${BUCKET}`)
 const candidates = new Set([
   ...FEEDS,
   // Windows
