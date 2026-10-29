@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net, session, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, net, session, shell, Tray, Menu, nativeImage } from 'electron'
 import { join, resolve as resolvePath } from 'node:path'
 import { resolveRunnerTarget } from './runner-target'
 import { loadRunnerConfig } from './config'
@@ -324,6 +324,28 @@ ipcMain.handle('net:fetchText', async (_e, url: unknown): Promise<string | null>
     return await res.text()
   } catch {
     return null
+  }
+})
+
+// Hand a link to the OS browser. setWindowOpenHandler allows window.open, which
+// Electron answers with a bare BrowserWindow — no toolbar, no way back — so the
+// runner's outbound links (the Telegram connect ticket, support, terms) used to
+// strand the student inside a chromeless frame. Refused while an exam is
+// active: a locked-down kiosk must not be able to pop a browser.
+ipcMain.handle('app:openExternal', async (_e, url: unknown): Promise<boolean> => {
+  if (typeof url !== 'string') return false
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:') return false
+  } catch {
+    return false
+  }
+  if (lockdownController?.active) return false
+  try {
+    await shell.openExternal(url)
+    return true
+  } catch {
+    return false
   }
 })
 

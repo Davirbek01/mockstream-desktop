@@ -23,6 +23,11 @@ contextBridge.exposeInMainWorld('desktop', {
    *  Resolves '' if the OS GUID can't be read (runner keeps its localStorage id). */
   machineId: (): Promise<string> => ipcRenderer.invoke('app:machineId'),
 
+  /** Open an https link in the OS browser instead of a chromeless Electron
+   *  window. Resolves false when the link was refused (not https, or an exam is
+   *  active) so the caller can say so rather than look broken. */
+  openExternal: (url: string): Promise<boolean> => ipcRenderer.invoke('app:openExternal', url),
+
   // --- Native OS notifications -------------------------------------------
   /** Fire a native desktop notification. The main process shows an Electron
    *  Notification; clicking it focuses the window and (if `route` is given)
