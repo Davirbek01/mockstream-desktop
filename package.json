@@ -1,6 +1,6 @@
 {
   "name": "mockstream-desktop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Electron desktop client for the Mock Stream exam platform (Windows + macOS).",
   "main": "out/main/index.js",
