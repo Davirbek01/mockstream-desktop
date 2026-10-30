@@ -7,7 +7,12 @@
 # OWN release bucket so achievers and Mock Stream auto-updates never cross.
 appId: app.mockstream.achievers.desktop
 productName: Achievers Academy
-# Frozen at 1.0.161 — the last build this clone ever gets.
+# Frozen at 1.0.162 — the last build this clone ever gets.
+# 1.0.161 went out twice: the first upload (2026-10-29 16:22Z) bundled the
+# runner that still read `desktopMigration === true`, so once the flag went to
+# "force" those installs showed nothing at all - and electron-updater will
+# re-offer a version equal to the one running, so they could never recover.
+# Hence a new number rather than a third 1.0.161.
 # ----------------------------------------------------------------------------
 # From here the app moves onto the shared Mock Stream build: AppShell shows the
 # migration notice once this centre's config turns `desktopMigration` on, and
@@ -19,7 +24,7 @@ productName: Achievers Academy
 # Detaching it from package.json also means a later Mock Stream release cannot
 # drag the clones along by accident.
 extraMetadata:
-  version: 1.0.161
+  version: 1.0.162
 
 directories:
   output: dist
