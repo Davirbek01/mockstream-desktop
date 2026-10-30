@@ -11,7 +11,8 @@ productName: Achievers Academy
 # 1.0.161 went out twice: the first upload (2026-10-29 16:22Z) bundled the
 # runner that still read `desktopMigration === true`, so once the flag went to
 # "force" those installs showed nothing at all - and electron-updater will
-# re-offer a version equal to the one running, so they could never recover.
+# not re-offer a version equal to the one running, so they could never
+# recover on their own.
 # Hence a new number rather than a third 1.0.161.
 # ----------------------------------------------------------------------------
 # From here the app moves onto the shared Mock Stream build: AppShell shows the
