@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-mac-record:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Check out desktop
         uses: actions/checkout@v4

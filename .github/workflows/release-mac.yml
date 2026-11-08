@@ -35,7 +35,11 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-14 # Apple Silicon; builds a universal binary for Intel + ARM
+    runs-on: macos-15 # Apple Silicon; builds a universal binary for Intel + ARM
+    # macos-14 RETIRED 2026-11-02. A job targeting a retired label is
+    # cancelled in ~3 s with no runner ever assigned and no step log, which
+    # reads like a mystery rather than a deprecation -- so if this one dies
+    # the same way, the label has moved on again (macos-26, macos-latest).
     steps:
       - name: Check out desktop
         uses: actions/checkout@v4
