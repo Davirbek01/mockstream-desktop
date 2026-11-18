@@ -50,6 +50,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Davirbek01/mockstream-runner
+          # Pinned: the release branch (mock-content). check-runner.mjs enforces it.
+          ref: plan-2-apps-bundle
+          fetch-depth: 0
           token: ${{ secrets.RUNNER_REPO_TOKEN }} # drop this line if the repo is public
           path: mockstream-runner
 
