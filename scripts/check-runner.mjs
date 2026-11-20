@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const REQUIRED = 'c8342e5'; // runner: apps bundle 2 (desktop 1.1.12)
+const REQUIRED = 'e1bf4ed'; // runner: enforce-ready (desktop 1.1.13)
 const FORBIDDEN_BRANCHES = ['speaking-web-proto'];
 // Branch tips already released in the app (merged on purpose, 1.1.11).
 const RELEASED_TIPS = { 'speaking-web-proto': '57fee5b' };
